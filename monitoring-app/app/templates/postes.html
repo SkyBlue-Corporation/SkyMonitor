@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Postes de Travail - Supervision Système</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Variables CSS pour les thèmes */
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2980b9;
+            --background-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+            --text-secondary: #7f8c8d;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --border-color: #e1e8ed;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        .dark-theme {
+            --primary-color: #3498db;
+            --secondary-color: #2980b9;
+            --background-color: #1a1d23;
+            --card-bg: #2d3748;
+            --text-color: #e2e8f0;
+            --text-secondary: #a0aec0;
+            --border-color: #4a5568;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Reset et styles de base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            transition: var(--transition);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* En-tête */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background-color: var(--card-bg);
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-placeholder {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-color);
+        }
+
+        .user-profile i {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        /* Contrôle du thème */
+        .theme-toggle {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background-color: var(--border-color);
+            border-radius: 15px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .theme-toggle::before {
+            content: '';
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: white;
+            top: 3px;
+            left: 3px;
+            transition: var(--transition);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .dark-theme .theme-toggle::before {
+            transform: translateX(30px);
+            background-color: var(--text-color);
+        }
+
+        /* Navigation */
+        nav {
+            background-color: var(--card-bg);
+            padding: 1rem 2rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--primary-color);
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+
+        /* Contenu principal */
+        main {
+            flex: 1;
+        }
+
+        .container {
+            padding: 0 2rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            color: var(--primary-color);
+        }
+
+        /* Filtres */
+        .filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .filter-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .filter-select {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-color);
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border-radius: 5px;
+            min-width: 150px;
+        }
+
+        /* Statistiques */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background-color: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Liste des postes */
+        .workstations-list {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+
+        .workstations-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .workstations-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .workstation-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+
+        .workstation-item:hover {
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+
+        .workstation-item:last-child {
+            border-bottom: none;
+        }
+
+        .workstation-status {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 1rem;
+        }
+
+        .status-online {
+            background-color: var(--success-color);
+        }
+
+        .status-warning {
+            background-color: var(--warning-color);
+        }
+
+        .status-offline {
+            background-color: var(--danger-color);
+        }
+
+        .workstation-info {
+            flex: 1;
+        }
+
+        .workstation-name {
+            font-weight: 600;
+            margin-bottom: 0.2rem;
+            font-size: 1.1rem;
+        }
+
+        .workstation-details {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .workstation-specs {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .spec {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .workstation-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        /* Pied de page */
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            border-top: 1px solid var(--border-color);
+            margin-top: 2rem;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-links {
+                flex-wrap: wrap;
+                gap: 1rem;
+            }
+            
+            .workstations-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+            
+            .workstation-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .workstation-specs {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .workstation-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+            
+            .filters {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo-container">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo Monitoring" class="logo" onerror="this.style.display='none'">
+            <div class="logo-placeholder">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="logo-text">Monitoring System</div>
+        </div>
+        <div class="header-controls">
+            <div class="theme-toggle" id="themeToggle"></div>
+            <div class="user-profile">
+                <i class="fas fa-user-circle"></i>
+                <span>Admin</span>
+            </div>
+        </div>
+    </header>
+
+    <nav>
+        <ul class="nav-links">
+            <li><a href="{{ url_for('main.index') }}" class="nav-link"><i class="fas fa-tachometer-alt"></i> Tableau de Bord</a></li>
+            <li><a href="{{ url_for('main.serveurs') }}" class="nav-link"><i class="fas fa-server"></i> Serveurs</a></li>
+            <li><a href="{{ url_for('main.postes') }}" class="nav-link active"><i class="fas fa-desktop"></i> Postes de Travail</a></li>
+            <li><a href="{{ url_for('main.conteneurs') }}" class="nav-link"><i class="fas fa-box"></i> Conteneurs</a></li>
+            <li><a href="{{ url_for('main.metriques') }}" class="nav-link"><i class="fas fa-chart-line"></i> Métriques</a></li>
+            <li><a href="{{ url_for('main.parametres') }}" class="nav-link"><i class="fas fa-cog"></i> Paramètres</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <div class="container">
+            <div class="page-content">
+                <h1 class="page-title">Postes de Travail</h1>
+                
+                <!-- Statistiques -->
+                <div class="stats-grid fade-in">
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-workstations">--</div>
+                        <div class="stat-label">Total Postes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="online-workstations">--</div>
+                        <div class="stat-label">En Ligne</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="offline-workstations">--</div>
+                        <div class="stat-label">Hors Ligne</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="avg-usage">--%</div>
+                        <div class="stat-label">Utilisation Moyenne</div>
+                    </div>
+                </div>
+
+                <!-- Filtres -->
+                <div class="filters fade-in">
+                    <div class="filter-group">
+                        <label class="filter-label">Statut</label>
+                        <select class="filter-select" id="status-filter">
+                            <option value="all">Tous les statuts</option>
+                            <option value="online">En ligne</option>
+                            <option value="offline">Hors ligne</option>
+                            <option value="warning">Alerte</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Département</label>
+                        <select class="filter-select" id="department-filter">
+                            <option value="all">Tous les départements</option>
+                            <option value="it">IT</option>
+                            <option value="commercial">Commercial</option>
+                            <option value="production">Production</option>
+                            <option value="administration">Administration</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Tri par</label>
+                        <select class="filter-select" id="sort-filter">
+                            <option value="name">Nom</option>
+                            <option value="status">Statut</option>
+                            <option value="cpu">Utilisation CPU</option>
+                            <option value="memory">Utilisation Mémoire</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Liste des postes -->
+                <div class="workstations-list fade-in">
+                    <div class="workstations-header">
+                        <h2 class="workstations-title">Liste des postes de travail</h2>
+                        <div>
+                            <button class="btn btn-outline" id="refresh-workstations">
+                                <i class="fas fa-sync-alt"></i> Actualiser
+                            </button>
+                            <button class="btn btn-primary" id="scan-workstations">
+                                <i class="fas fa-search"></i> Scanner réseau
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="workstations-list-container">
+                        <div class="workstation-item">
+                            <div class="workstation-status status-online"></div>
+                            <div class="workstation-info">
+                                <div class="workstation-name">Chargement des postes...</div>
+                                <div class="workstation-details">Connexion à l'API en cours</div>
+                            </div>
+                            <div class="workstation-actions">
+                                <button class="btn btn-outline">Détails</button>
+                                <button class="btn btn-primary">Gérer</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>Système de Monitoring - © 2024 Tous droits réservés</p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script>
+        // Script spécifique à la page des postes
+        document.addEventListener('DOMContentLoaded', function() {
+            loadWorkstations();
+            loadWorkstationStats();
+            
+            document.getElementById('refresh-workstations').addEventListener('click', function() {
+                loadWorkstations();
+                loadWorkstationStats();
+            });
+
+            // Filtres
+            document.getElementById('status-filter').addEventListener('change', filterWorkstations);
+            document.getElementById('department-filter').addEventListener('change', filterWorkstations);
+            document.getElementById('sort-filter').addEventListener('change', filterWorkstations);
+        });
+
+        async function loadWorkstationStats() {
+            try {
+                const response = await fetch('/api/dashboard/stats');
+                const stats = await response.json();
+                
+                document.getElementById('total-workstations').textContent = stats.workstations;
+                // Simuler d'autres statistiques
+                document.getElementById('online-workstations').textContent = Math.floor(stats.workstations * 0.85);
+                document.getElementById('offline-workstations').textContent = stats.workstations - Math.floor(stats.workstations * 0.85);
+                document.getElementById('avg-usage').textContent = '45%';
+                
+            } catch (error) {
+                console.error('Erreur lors du chargement des statistiques:', error);
+            }
+        }
+
+        async function loadWorkstations() {
+            try {
+                const response = await fetch('/api/postes');
+                const workstations = await response.json();
+                displayWorkstations(workstations);
+            } catch (error) {
+                console.error('Erreur lors du chargement des postes:', error);
+                showError('Impossible de charger la liste des postes');
+            }
+        }
+
+        function displayWorkstations(workstations) {
+            const container = document.getElementById('workstations-list-container');
+            container.innerHTML = '';
+            
+            if (workstations.length === 0) {
+                container.innerHTML = `
+                    <div class="workstation-item">
+                        <div class="workstation-info">
+                            <div class="workstation-name">Aucun poste de travail trouvé</div>
+                            <div class="workstation-details">Utilisez le scanner pour découvrir les postes</div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            workstations.forEach(workstation => {
+                const statusClass = workstation.status === 'online' ? 'status-online' : 
+                                  workstation.status === 'warning' ? 'status-warning' : 'status-offline';
+                
+                const department = getRandomDepartment();
+                const os = getRandomOS();
+                
+                const workstationElement = `
+                    <div class="workstation-item" data-status="${workstation.status}" data-department="${department}">
+                        <div class="workstation-status ${statusClass}"></div>
+                        <div class="workstation-info">
+                            <div class="workstation-name">${workstation.name}</div>
+                            <div class="workstation-details">
+                                ${workstation.ip_address} • ${department} • ${os}
+                            </div>
+                            <div class="workstation-specs">
+                                <div class="spec">
+                                    <i class="fas fa-microchip"></i>
+                                    <span>CPU: ${workstation.cpu_usage}%</span>
+                                </div>
+                                <div class="spec">
+                                    <i class="fas fa-memory"></i>
+                                    <span>RAM: ${workstation.memory_usage}%</span>
+                                </div>
+                                <div class="spec">
+                                    <i class="fas fa-hdd"></i>
+                                    <span>Stockage: ${workstation.storage_usage}%</span>
+                                </div>
+                                <div class="spec">
+                                    <i class="fas fa-user"></i>
+                                    <span>Utilisateur: ${getRandomUser()}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="workstation-actions">
+                            <button class="btn btn-outline" onclick="showWorkstationDetails(${workstation.id})">
+                                <i class="fas fa-info-circle"></i> Détails
+                            </button>
+                            <button class="btn btn-primary" onclick="manageWorkstation(${workstation.id})">
+                                <i class="fas fa-desktop"></i> Contrôle
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += workstationElement;
+            });
+        }
+
+        function filterWorkstations() {
+            const statusFilter = document.getElementById('status-filter').value;
+            const departmentFilter = document.getElementById('department-filter').value;
+            const sortFilter = document.getElementById('sort-filter').value;
+            
+            // Implémentation basique du filtrage
+            const items = document.querySelectorAll('.workstation-item');
+            items.forEach(item => {
+                const status = item.getAttribute('data-status');
+                const department = item.getAttribute('data-department');
+                
+                let show = true;
+                
+                if (statusFilter !== 'all' && status !== statusFilter) {
+                    show = false;
+                }
+                
+                if (departmentFilter !== 'all' && department !== departmentFilter) {
+                    show = false;
+                }
+                
+                item.style.display = show ? 'flex' : 'none';
+            });
+        }
+
+        function getRandomDepartment() {
+            const departments = ['IT', 'Commercial', 'Production', 'Administration', 'RH'];
+            return departments[Math.floor(Math.random() * departments.length)];
+        }
+
+        function getRandomOS() {
+            const os = ['Windows 10', 'Windows 11', 'Ubuntu 22.04', 'macOS', 'Linux Mint'];
+            return os[Math.floor(Math.random() * os.length)];
+        }
+
+        function getRandomUser() {
+            const users = ['jdupont', 'mleroy', 'pmoreau', 'ldurand', 'cpetit'];
+            return users[Math.floor(Math.random() * users.length)];
+        }
+
+        function showWorkstationDetails(workstationId) {
+            alert(`Détails du poste #${workstationId} - À implémenter`);
+        }
+
+        function manageWorkstation(workstationId) {
+            alert(`Contrôle du poste #${workstationId} - À implémenter`);
+        }
+
+        function showError(message) {
+            alert('Erreur: ' + message);
+        }
+    </script>
+</body>
+</html>

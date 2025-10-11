@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conteneurs - SkyMonitor</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Variables CSS pour les thèmes */
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2980b9;
+            --background-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+            --text-secondary: #7f8c8d;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --border-color: #e1e8ed;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        .dark-theme {
+            --primary-color: #3498db;
+            --secondary-color: #2980b9;
+            --background-color: #1a1d23;
+            --card-bg: #2d3748;
+            --text-color: #e2e8f0;
+            --text-secondary: #a0aec0;
+            --border-color: #4a5568;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Reset et styles de base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            transition: var(--transition);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* En-tête */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background-color: var(--card-bg);
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-placeholder {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-color);
+        }
+
+        .user-profile i {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        /* Contrôle du thème */
+        .theme-toggle {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background-color: var(--border-color);
+            border-radius: 15px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .theme-toggle::before {
+            content: '';
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: white;
+            top: 3px;
+            left: 3px;
+            transition: var(--transition);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .dark-theme .theme-toggle::before {
+            transform: translateX(30px);
+            background-color: var(--text-color);
+        }
+
+        /* Navigation */
+        nav {
+            background-color: var(--card-bg);
+            padding: 1rem 2rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--primary-color);
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+
+        /* Contenu principal */
+        main {
+            flex: 1;
+        }
+
+        .container {
+            padding: 0 2rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            color: var(--primary-color);
+        }
+
+        /* Statistiques */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background-color: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            text-align: center;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Filtres */
+        .filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .filter-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .filter-select {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-color);
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border-radius: 5px;
+            min-width: 150px;
+        }
+
+        /* Grille des conteneurs */
+        .containers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .container-card {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+
+        .container-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .container-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .container-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .container-status {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .status-running {
+            background-color: var(--success-color);
+        }
+
+        .status-stopped {
+            background-color: var(--danger-color);
+        }
+
+        .status-paused {
+            background-color: var(--warning-color);
+        }
+
+        .container-image {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            font-family: monospace;
+        }
+
+        .container-metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .metric {
+            text-align: center;
+            padding: 0.5rem;
+            background: rgba(52, 152, 219, 0.1);
+            border-radius: 5px;
+        }
+
+        .metric-value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.2rem;
+        }
+
+        .metric-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .container-ports {
+            margin-bottom: 1rem;
+        }
+
+        .ports-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .ports-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .port {
+            padding: 0.2rem 0.5rem;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 3px;
+            font-size: 0.8rem;
+        }
+
+        .container-actions {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .btn-warning {
+            background-color: var(--warning-color);
+            color: white;
+        }
+
+        /* Actions globales */
+        .global-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        /* Pied de page */
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            border-top: 1px solid var(--border-color);
+            margin-top: 2rem;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-links {
+                flex-wrap: wrap;
+                gap: 1rem;
+            }
+            
+            .containers-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .container-metrics {
+                grid-template-columns: 1fr;
+            }
+            
+            .filters {
+                flex-direction: column;
+            }
+            
+            .global-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo-container">
+            <div class="logo-placeholder">
+                <i class="fas fa-box"></i>
+            </div>
+            <div class="logo-text">SkyMonitor</div>
+        </div>
+        <div class="header-controls">
+            <div class="theme-toggle" id="themeToggle"></div>
+            <div class="user-profile">
+                <i class="fas fa-user-circle"></i>
+                <span>Admin</span>
+            </div>
+        </div>
+    </header>
+
+    <nav>
+        <ul class="nav-links">
+            <li><a href="/"><i class="fas fa-home"></i> Accueil</a></li>
+            <li><a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Tableau de Bord</a></li>
+            <li><a href="/serveurs"><i class="fas fa-server"></i> Serveurs</a></li>
+            <li><a href="/postes"><i class="fas fa-desktop"></i> Postes de Travail</a></li>
+            <li><a href="/conteneurs" class="active"><i class="fas fa-box"></i> Conteneurs</a></li>
+            <li><a href="/metriques"><i class="fas fa-chart-line"></i> Métriques</a></li>
+            <li><a href="/parametres"><i class="fas fa-cog"></i> Paramètres</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <div class="container">
+            <h1 class="page-title">Gestion des Conteneurs Docker</h1>
+            
+            <!-- Statistiques -->
+            <div class="stats-grid fade-in">
+                <div class="stat-card">
+                    <div class="stat-value" id="total-containers">--</div>
+                    <div class="stat-label">Total Conteneurs</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="running-containers">--</div>
+                    <div class="stat-label">En Cours</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stopped-containers">--</div>
+                    <div class="stat-label">Arrêtés</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="cpu-usage">--%</div>
+                    <div class="stat-label">CPU Moyen</div>
+                </div>
+            </div>
+
+            <!-- Filtres -->
+            <div class="filters fade-in delay-1">
+                <div class="filter-group">
+                    <label class="filter-label">Statut</label>
+                    <select class="filter-select" id="status-filter">
+                        <option value="all">Tous les statuts</option>
+                        <option value="running">En cours</option>
+                        <option value="stopped">Arrêtés</option>
+                        <option value="paused">En pause</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Tri par</label>
+                    <select class="filter-select" id="sort-filter">
+                        <option value="name">Nom</option>
+                        <option value="status">Statut</option>
+                        <option value="cpu">Utilisation CPU</option>
+                        <option value="memory">Utilisation Mémoire</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Recherche</label>
+                    <input type="text" class="filter-select" id="search-filter" placeholder="Nom du conteneur...">
+                </div>
+            </div>
+
+            <!-- Grille des conteneurs -->
+            <div class="containers-grid" id="containers-grid">
+                <!-- Les conteneurs seront chargés dynamiquement ici -->
+                <div class="container-card fade-in delay-2">
+                    <div class="container-header">
+                        <div class="container-name">
+                            <div class="container-status status-running"></div>
+                            Chargement...
+                        </div>
+                    </div>
+                    <div class="container-image">Image: ...</div>
+                    <div class="container-metrics">
+                        <div class="metric">
+                            <div class="metric-value">--%</div>
+                            <div class="metric-label">CPU</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">--%</div>
+                            <div class="metric-label">Mémoire</div>
+                        </div>
+                    </div>
+                    <div class="container-actions">
+                        <button class="btn btn-outline">Détails</button>
+                        <button class="btn btn-primary">Gérer</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions globales -->
+            <div class="global-actions fade-in delay-3">
+                <button class="btn btn-outline" id="refresh-containers">
+                    <i class="fas fa-sync-alt"></i> Actualiser
+                </button>
+                <button class="btn btn-primary" id="create-container">
+                    <i class="fas fa-plus"></i> Nouveau Conteneur
+                </button>
+                <button class="btn btn-success" id="start-all">
+                    <i class="fas fa-play"></i> Tout Démarrer
+                </button>
+                <button class="btn btn-danger" id="stop-all">
+                    <i class="fas fa-stop"></i> Tout Arrêter
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>Système de Monitoring SkyMonitor - © 2024 Tous droits réservés</p>
+    </footer>
+
+    <script>
+        // Données simulées pour les conteneurs
+        const sampleContainers = [
+            {
+                id: 1,
+                name: "web-app",
+                image: "nginx:latest",
+                status: "running",
+                cpu: 15.5,
+                memory: 245,
+                memoryLimit: 512,
+                ports: ["80:80", "443:443"],
+                createdAt: "2024-01-15T10:30:00Z"
+            },
+            {
+                id: 2,
+                name: "database",
+                image: "postgres:15",
+                status: "running",
+                cpu: 32.1,
+                memory: 512,
+                memoryLimit: 1024,
+                ports: ["5432:5432"],
+                createdAt: "2024-01-10T08:15:00Z"
+            },
+            {
+                id: 3,
+                name: "redis-cache",
+                image: "redis:alpine",
+                status: "running",
+                cpu: 8.2,
+                memory: 128,
+                memoryLimit: 256,
+                ports: ["6379:6379"],
+                createdAt: "2024-01-12T14:20:00Z"
+            },
+            {
+                id: 4,
+                name: "api-backend",
+                image: "node:18-alpine",
+                status: "stopped",
+                cpu: 0,
+                memory: 0,
+                memoryLimit: 512,
+                ports: ["3000:3000"],
+                createdAt: "2024-01-08T09:45:00Z"
+            },
+            {
+                id: 5,
+                name: "monitoring",
+                image: "grafana/grafana:latest",
+                status: "paused",
+                cpu: 5.7,
+                memory: 198,
+                memoryLimit: 512,
+                ports: ["3001:3000"],
+                createdAt: "2024-01-14T16:10:00Z"
+            },
+            {
+                id: 6,
+                name: "log-aggregator",
+                image: "elasticsearch:8.11",
+                status: "running",
+                cpu: 45.3,
+                memory: 896,
+                memoryLimit: 2048,
+                ports: ["9200:9200", "9300:9300"],
+                createdAt: "2024-01-05T11:20:00Z"
+            }
+        ];
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTheme();
+            loadContainers();
+            setupEventListeners();
+        });
+
+        // Gestion du thème
+        function initializeTheme() {
+            const themeToggle = document.getElementById('themeToggle');
+            const body = document.body;
+
+            const currentTheme = localStorage.getItem('theme');
+            if (currentTheme === 'dark') {
+                body.classList.add('dark-theme');
+            }
+
+            if (themeToggle) {
+                themeToggle.addEventListener('click', () => {
+                    body.classList.toggle('dark-theme');
+                    localStorage.setItem('theme', body.classList.contains('dark-theme') ? 'dark' : 'light');
+                });
+            }
+        }
+
+        // Chargement des conteneurs
+        function loadContainers() {
+            const containersGrid = document.getElementById('containers-grid');
+            containersGrid.innerHTML = '';
+
+            // Mettre à jour les statistiques
+            updateStats(sampleContainers);
+
+            // Afficher les conteneurs
+            sampleContainers.forEach(container => {
+                const containerElement = createContainerCard(container);
+                containersGrid.appendChild(containerElement);
+            });
+        }
+
+        // Mise à jour des statistiques
+        function updateStats(containers) {
+            const total = containers.length;
+            const running = containers.filter(c => c.status === 'running').length;
+            const stopped = containers.filter(c => c.status === 'stopped').length;
+            const avgCpu = (containers.reduce((sum, c) => sum + c.cpu, 0) / total).toFixed(1);
+
+            document.getElementById('total-containers').textContent = total;
+            document.getElementById('running-containers').textContent = running;
+            document.getElementById('stopped-containers').textContent = stopped;
+            document.getElementById('cpu-usage').textContent = avgCpu + '%';
+        }
+
+        // Création d'une carte conteneur
+        function createContainerCard(container) {
+            const card = document.createElement('div');
+            card.className = 'container-card fade-in';
+            
+            const statusClass = `status-${container.status}`;
+            const statusText = getStatusText(container.status);
+            const memoryUsage = ((container.memory / container.memoryLimit) * 100).toFixed(1);
+
+            card.innerHTML = `
+                <div class="container-header">
+                    <div class="container-name">
+                        <div class="container-status ${statusClass}"></div>
+                        ${container.name}
+                    </div>
+                    <div class="container-actions">
+                        <button class="btn btn-outline" onclick="showContainerDetails(${container.id})">
+                            <i class="fas fa-info-circle"></i>
+                        </button>
+                        <button class="btn btn-primary" onclick="manageContainer(${container.id})">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="container-image">${container.image}</div>
+                <div class="container-metrics">
+                    <div class="metric">
+                        <div class="metric-value">${container.cpu}%</div>
+                        <div class="metric-label">CPU</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">${memoryUsage}%</div>
+                        <div class="metric-label">Mémoire</div>
+                    </div>
+                </div>
+                <div class="container-ports">
+                    <div class="ports-label">Ports:</div>
+                    <div class="ports-list">
+                        ${container.ports.map(port => `<span class="port">${port}</span>`).join('')}
+                    </div>
+                </div>
+                <div class="container-actions">
+                    ${getActionButtons(container.status, container.id)}
+                </div>
+            `;
+
+            return card;
+        }
+
+        // Texte du statut
+        function getStatusText(status) {
+            const statusMap = {
+                'running': 'En cours',
+                'stopped': 'Arrêté',
+                'paused': 'En pause'
+            };
+            return statusMap[status] || status;
+        }
+
+        // Boutons d'action selon le statut
+        function getActionButtons(status, containerId) {
+            const baseButtons = `
+                <button class="btn btn-outline" onclick="showContainerLogs(${containerId})">
+                    <i class="fas fa-terminal"></i> Logs
+                </button>
+            `;
+
+            if (status === 'running') {
+                return baseButtons + `
+                    <button class="btn btn-warning" onclick="pauseContainer(${containerId})">
+                        <i class="fas fa-pause"></i> Pause
+                    </button>
+                    <button class="btn btn-danger" onclick="stopContainer(${containerId})">
+                        <i class="fas fa-stop"></i> Arrêter
+                    </button>
+                `;
+            } else if (status === 'stopped') {
+                return baseButtons + `
+                    <button class="btn btn-success" onclick="startContainer(${containerId})">
+                        <i class="fas fa-play"></i> Démarrer
+                    </button>
+                    <button class="btn btn-danger" onclick="removeContainer(${containerId})">
+                        <i class="fas fa-trash"></i> Supprimer
+                    </button>
+                `;
+            } else if (status === 'paused') {
+                return baseButtons + `
+                    <button class="btn btn-success" onclick="resumeContainer(${containerId})">
+                        <i class="fas fa-play"></i> Reprendre
+                    </button>
+                    <button class="btn btn-danger" onclick="stopContainer(${containerId})">
+                        <i class="fas fa-stop"></i> Arrêter
+                    </button>
+                `;
+            }
+
+            return baseButtons;
+        }
+
+        // Configuration des événements
+        function setupEventListeners() {
+            document.getElementById('refresh-containers').addEventListener('click', loadContainers);
+            document.getElementById('create-container').addEventListener('click', createNewContainer);
+            document.getElementById('start-all').addEventListener('click', startAllContainers);
+            document.getElementById('stop-all').addEventListener('click', stopAllContainers);
+
+            // Filtres
+            document.getElementById('status-filter').addEventListener('change', filterContainers);
+            document.getElementById('sort-filter').addEventListener('change', sortContainers);
+            document.getElementById('search-filter').addEventListener('input', searchContainers);
+        }
+
+        // Fonctions d'action (simulées)
+        function showContainerDetails(id) {
+            alert(`Détails du conteneur #${id}`);
+        }
+
+        function manageContainer(id) {
+            alert(`Gestion du conteneur #${id}`);
+        }
+
+        function showContainerLogs(id) {
+            alert(`Logs du conteneur #${id}`);
+        }
+
+        function startContainer(id) {
+            alert(`Démarrage du conteneur #${id}`);
+        }
+
+        function stopContainer(id) {
+            alert(`Arrêt du conteneur #${id}`);
+        }
+
+        function pauseContainer(id) {
+            alert(`Pause du conteneur #${id}`);
+        }
+
+        function resumeContainer(id) {
+            alert(`Reprise du conteneur #${id}`);
+        }
+
+        function removeContainer(id) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer ce conteneur ?')) {
+                alert(`Suppression du conteneur #${id}`);
+            }
+        }
+
+        function createNewContainer() {
+            alert('Création d\'un nouveau conteneur');
+        }
+
+        function startAllContainers() {
+            alert('Démarrage de tous les conteneurs');
+        }
+
+        function stopAllContainers() {
+            if (confirm('Êtes-vous sûr de vouloir arrêter tous les conteneurs ?')) {
+                alert('Arrêt de tous les conteneurs');
+            }
+        }
+
+        // Filtrage et recherche
+        function filterContainers() {
+            // Implémentation du filtrage
+            console.log('Filtrage des conteneurs');
+        }
+
+        function sortContainers() {
+            // Implémentation du tri
+            console.log('Tri des conteneurs');
+        }
+
+        function searchContainers() {
+            // Implémentation de la recherche
+            console.log('Recherche de conteneurs');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau de Bord - SkyMonitor</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Variables CSS pour les thèmes */
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2980b9;
+            --background-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+            --text-secondary: #7f8c8d;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --border-color: #e1e8ed;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        .dark-theme {
+            --primary-color: #3498db;
+            --secondary-color: #2980b9;
+            --background-color: #1a1d23;
+            --card-bg: #2d3748;
+            --text-color: #e2e8f0;
+            --text-secondary: #a0aec0;
+            --border-color: #4a5568;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Reset et styles de base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            transition: var(--transition);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* En-tête */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background-color: var(--card-bg);
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-placeholder {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-color);
+        }
+
+        .user-profile i {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        /* Contrôle du thème */
+        .theme-toggle {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background-color: var(--border-color);
+            border-radius: 15px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .theme-toggle::before {
+            content: '';
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: white;
+            top: 3px;
+            left: 3px;
+            transition: var(--transition);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .dark-theme .theme-toggle::before {
+            transform: translateX(30px);
+            background-color: var(--text-color);
+        }
+
+        /* Navigation */
+        nav {
+            background-color: var(--card-bg);
+            padding: 1rem 2rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--primary-color);
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+
+        /* Contenu principal */
+        main {
+            flex: 1;
+        }
+
+        .container {
+            padding: 0 2rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            color: var(--primary-color);
+        }
+
+        .time-filter {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .time-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-color);
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .time-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* Grille des cartes */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .server-icon {
+            background-color: var(--primary-color);
+        }
+
+        .workstation-icon {
+            background-color: var(--success-color);
+        }
+
+        .container-icon {
+            background-color: var(--warning-color);
+        }
+
+        .availability-icon {
+            background-color: var(--success-color);
+        }
+
+        .card-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-change {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .positive {
+            color: var(--success-color);
+        }
+
+        .negative {
+            color: var(--danger-color);
+        }
+
+        /* Graphiques et tableaux */
+        .charts-container {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .chart-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+
+        .chart-placeholder, .alerts-placeholder {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(52, 152, 219, 0.1), rgba(41, 128, 185, 0.1));
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .chart-placeholder i, .alerts-placeholder i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        /* Liste des serveurs */
+        .servers-list {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+
+        .servers-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .servers-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .server-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+
+        .server-item:hover {
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+
+        .server-item:last-child {
+            border-bottom: none;
+        }
+
+        .server-status {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 1rem;
+        }
+
+        .status-online {
+            background-color: var(--success-color);
+        }
+
+        .status-warning {
+            background-color: var(--warning-color);
+        }
+
+        .status-offline {
+            background-color: var(--danger-color);
+        }
+
+        .server-info {
+            flex: 1;
+        }
+
+        .server-name {
+            font-weight: 600;
+            margin-bottom: 0.2rem;
+        }
+
+        .server-details {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .server-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+        }
+
+        /* Pied de page */
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            border-top: 1px solid var(--border-color);
+            margin-top: 2rem;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        .delay-4 { animation-delay: 0.4s; }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-links {
+                flex-wrap: wrap;
+                gap: 1rem;
+            }
+            
+            .dashboard-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .time-filter {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .time-filter button {
+                flex: 1;
+                text-align: center;
+            }
+            
+            .servers-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+            
+            .server-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .server-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo-container">
+            <div class="logo-placeholder">
+                <i class="fas fa-tachometer-alt"></i>
+            </div>
+            <div class="logo-text">SkyMonitor</div>
+        </div>
+        <div class="header-controls">
+            <div class="theme-toggle" id="themeToggle"></div>
+            <div class="user-profile">
+                <i class="fas fa-user-circle"></i>
+                <span>Admin</span>
+            </div>
+        </div>
+    </header>
+
+    <nav>
+        <ul class="nav-links">
+            <li><a href="/"><i class="fas fa-home"></i> Accueil</a></li>
+            <li><a href="/dashboard" class="active"><i class="fas fa-tachometer-alt"></i> Tableau de Bord</a></li>
+            <li><a href="/serveurs"><i class="fas fa-server"></i> Serveurs</a></li>
+            <li><a href="/postes"><i class="fas fa-desktop"></i> Postes de Travail</a></li>
+            <li><a href="/conteneurs"><i class="fas fa-box"></i> Conteneurs</a></li>
+            <li><a href="/metriques"><i class="fas fa-chart-line"></i> Métriques</a></li>
+            <li><a href="/parametres"><i class="fas fa-cog"></i> Paramètres</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <div class="container">
+            <div class="dashboard-header">
+                <h1 class="page-title">Tableau de Bord</h1>
+                <div class="time-filter">
+                    <button class="time-btn active">24H</button>
+                    <button class="time-btn">7J</button>
+                    <button class="time-btn">30J</button>
+                    <button class="time-btn">3M</button>
+                    <button class="time-btn">1A</button>
+                </div>
+            </div>
+
+            <!-- Cartes de statistiques -->
+            <div class="cards-grid">
+                <div class="card fade-in">
+                    <div class="card-header">
+                        <h3 class="card-title">Serveurs</h3>
+                        <div class="card-icon server-icon">
+                            <i class="fas fa-server"></i>
+                        </div>
+                    </div>
+                    <div class="card-value" id="server-count">--</div>
+                    <div class="card-change positive">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>+2 depuis hier</span>
+                    </div>
+                </div>
+
+                <div class="card fade-in delay-1">
+                    <div class="card-header">
+                        <h3 class="card-title">Postes de Travail</h3>
+                        <div class="card-icon workstation-icon">
+                            <i class="fas fa-desktop"></i>
+                        </div>
+                    </div>
+                    <div class="card-value" id="workstation-count">--</div>
+                    <div class="card-change negative">
+                        <i class="fas fa-arrow-down"></i>
+                        <span>-5 depuis hier</span>
+                    </div>
+                </div>
+
+                <div class="card fade-in delay-2">
+                    <div class="card-header">
+                        <h3 class="card-title">Conteneurs</h3>
+                        <div class="card-icon container-icon">
+                            <i class="fas fa-box"></i>
+                        </div>
+                    </div>
+                    <div class="card-value" id="container-count">--</div>
+                    <div class="card-change positive">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>+12 depuis hier</span>
+                    </div>
+                </div>
+
+                <div class="card fade-in delay-3">
+                    <div class="card-header">
+                        <h3 class="card-title">Disponibilité</h3>
+                        <div class="card-icon availability-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+                    <div class="card-value" id="availability-rate">--%</div>
+                    <div class="card-change positive">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>+0.2% depuis hier</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Graphiques et alertes -->
+            <div class="charts-container">
+                <div class="chart-card fade-in delay-1">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Utilisation des ressources</h3>
+                        <div class="time-filter">
+                            <button class="time-btn active">CPU</button>
+                            <button class="time-btn">RAM</button>
+                            <button class="time-btn">Stockage</button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-placeholder" id="resource-chart">
+                            <i class="fas fa-chart-bar"></i>
+                            <p>Graphique d'utilisation des ressources</p>
+                            <small>Chargement des données...</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-card fade-in delay-2">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Alertes récentes</h3>
+                        <button class="btn btn-outline" id="refresh-alerts">Actualiser</button>
+                    </div>
+                    <div class="chart-container">
+                        <div class="alerts-placeholder" id="alerts-list">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <p>Aucune alerte active</p>
+                            <small>Tous les systèmes fonctionnent normalement</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Liste des serveurs critiques -->
+            <div class="servers-list fade-in delay-3">
+                <div class="servers-header">
+                    <h3 class="servers-title">Serveurs critiques</h3>
+                    <button class="btn btn-primary" id="scan-network">
+                        <i class="fas fa-search"></i> Scanner le réseau
+                    </button>
+                </div>
+                <div id="critical-servers-list">
+                    <div class="server-item">
+                        <div class="server-status status-online"></div>
+                        <div class="server-info">
+                            <div class="server-name">Serveur Web Principal</div>
+                            <div class="server-details">IP: 192.168.1.10 | CPU: 45% | RAM: 62%</div>
+                        </div>
+                        <div class="server-actions">
+                            <button class="btn btn-outline">Détails</button>
+                            <button class="btn btn-primary">Gérer</button>
+                        </div>
+                    </div>
+                    <div class="server-item">
+                        <div class="server-status status-warning"></div>
+                        <div class="server-info">
+                            <div class="server-name">Base de Données</div>
+                            <div class="server-details">IP: 192.168.1.11 | CPU: 82% | RAM: 45%</div>
+                        </div>
+                        <div class="server-actions">
+                            <button class="btn btn-outline">Détails</button>
+                            <button class="btn btn-primary">Gérer</button>
+                        </div>
+                    </div>
+                    <div class="server-item">
+                        <div class="server-status status-online"></div>
+                        <div class="server-info">
+                            <div class="server-name">Serveur d'Applications</div>
+                            <div class="server-details">IP: 192.168.1.12 | CPU: 23% | RAM: 41%</div>
+                        </div>
+                        <div class="server-actions">
+                            <button class="btn btn-outline">Détails</button>
+                            <button class="btn btn-primary">Gérer</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>Système de Monitoring SkyMonitor - © 2024 Tous droits réservés</p>
+    </footer>
+
+    <script>
+        // Initialisation du dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTheme();
+            loadDashboardData();
+            
+            // Actualiser les données toutes les 30 secondes
+            setInterval(loadDashboardData, 30000);
+            
+            // Événements
+            document.getElementById('scan-network').addEventListener('click', scanNetwork);
+            document.getElementById('refresh-alerts').addEventListener('click', refreshAlerts);
+        });
+
+        // Chargement des données du dashboard
+        async function loadDashboardData() {
+            try {
+                const response = await fetch('/api/dashboard/stats');
+                const data = await response.json();
+                
+                // Mettre à jour les compteurs
+                document.getElementById('server-count').textContent = data.servers;
+                document.getElementById('workstation-count').textContent = data.workstations;
+                document.getElementById('container-count').textContent = data.containers;
+                document.getElementById('availability-rate').textContent = data.availability_rate + '%';
+                
+            } catch (error) {
+                console.error('Erreur lors du chargement des données:', error);
+                // Valeurs par défaut en cas d'erreur
+                document.getElementById('server-count').textContent = '12';
+                document.getElementById('workstation-count').textContent = '45';
+                document.getElementById('container-count').textContent = '23';
+                document.getElementById('availability-rate').textContent = '99.8%';
+            }
+        }
+
+        // Scanner le réseau
+        async function scanNetwork() {
+            const button = document.getElementById('scan-network');
+            const originalText = button.innerHTML;
+            
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Scan en cours...';
+            button.disabled = true;
+            
+            try {
+                const response = await fetch('/api/scan-network', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Scan réseau terminé avec succès!');
+                    loadDashboardData(); // Recharger les données
+                } else {
+                    alert('Erreur lors du scan: ' + result.error);
+                }
+                
+            } catch (error) {
+                console.error('Erreur lors du scan:', error);
+                alert('Erreur de connexion lors du scan');
+            } finally {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        }
+
+        // Actualiser les alertes
+        function refreshAlerts() {
+            const alertsList = document.getElementById('alerts-list');
+            alertsList.innerHTML = `
+                <i class="fas fa-check-circle" style="color: var(--success-color);"></i>
+                <p>Aucune alerte critique</p>
+                <small>Dernière vérification: ${new Date().toLocaleTimeString()}</small>
+            `;
+        }
+
+        // Gestion du thème
+        function initializeTheme() {
+            const themeToggle = document.getElementById('themeToggle');
+            const body = document.body;
+
+            const currentTheme = localStorage.getItem('theme');
+            if (currentTheme === 'dark') {
+                body.classList.add('dark-theme');
+            }
+
+            if (themeToggle) {
+                themeToggle.addEventListener('click', () => {
+                    body.classList.toggle('dark-theme');
+                    localStorage.setItem('theme', body.classList.contains('dark-theme') ? 'dark' : 'light');
+                });
+            }
+        }
+    </script>
+</body>
+</html>

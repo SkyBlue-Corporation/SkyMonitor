@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Métriques - Supervision Système</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Variables CSS pour les thèmes */
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2980b9;
+            --background-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+            --text-secondary: #7f8c8d;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --border-color: #e1e8ed;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        .dark-theme {
+            --primary-color: #3498db;
+            --secondary-color: #2980b9;
+            --background-color: #1a1d23;
+            --card-bg: #2d3748;
+            --text-color: #e2e8f0;
+            --text-secondary: #a0aec0;
+            --border-color: #4a5568;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Reset et styles de base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            transition: var(--transition);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* En-tête */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background-color: var(--card-bg);
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-placeholder {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-color);
+        }
+
+        .user-profile i {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        /* Contrôle du thème */
+        .theme-toggle {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background-color: var(--border-color);
+            border-radius: 15px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .theme-toggle::before {
+            content: '';
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: white;
+            top: 3px;
+            left: 3px;
+            transition: var(--transition);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .dark-theme .theme-toggle::before {
+            transform: translateX(30px);
+            background-color: var(--text-color);
+        }
+
+        /* Navigation */
+        nav {
+            background-color: var(--card-bg);
+            padding: 1rem 2rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--primary-color);
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+
+        /* Contenu principal */
+        main {
+            flex: 1;
+        }
+
+        .container {
+            padding: 0 2rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            color: var(--primary-color);
+        }
+
+        /* Filtres et contrôles */
+        .metrics-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .time-filters {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .time-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-color);
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .time-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .export-btn {
+            padding: 0.5rem 1rem;
+            background-color: var(--success-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Grille des métriques */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .metric-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .metric-chart {
+            height: 200px;
+            background: linear-gradient(135deg, rgba(52, 152, 219, 0.1), rgba(41, 128, 185, 0.1));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .metric-trend {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .trend-up {
+            color: var(--success-color);
+        }
+
+        .trend-down {
+            color: var(--danger-color);
+        }
+
+        /* Tableau des performances */
+        .performance-table {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .table-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .performance-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .performance-table th,
+        .performance-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .performance-table th {
+            font-weight: 600;
+            color: var(--text-secondary);
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+
+        .performance-table tr:hover {
+            background-color: rgba(52, 152, 219, 0.02);
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 0.5rem;
+        }
+
+        .status-optimal { background-color: var(--success-color); }
+        .status-warning { background-color: var(--warning-color); }
+        .status-critical { background-color: var(--danger-color); }
+
+        /* Pied de page */
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            border-top: 1px solid var(--border-color);
+            margin-top: 2rem;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-links {
+                flex-wrap: wrap;
+                gap: 1rem;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .metrics-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .time-filters {
+                justify-content: center;
+            }
+            
+            .performance-table {
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo-container">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo Monitoring" class="logo" onerror="this.style.display='none'">
+            <div class="logo-placeholder">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="logo-text">Monitoring System</div>
+        </div>
+        <div class="header-controls">
+            <div class="theme-toggle" id="themeToggle"></div>
+            <div class="user-profile">
+                <i class="fas fa-user-circle"></i>
+                <span>Admin</span>
+            </div>
+        </div>
+    </header>
+
+    <nav>
+        <ul class="nav-links">
+            <li><a href="/" class="nav-link"><i class="fas fa-home"></i> Accueil</a></li>
+            <li><a href="/dashboard" class="nav-link"><i class="fas fa-tachometer-alt"></i> Tableau de Bord</a></li>
+            <li><a href="/serveurs" class="nav-link"><i class="fas fa-server"></i> Serveurs</a></li>
+            <li><a href="/postes" class="nav-link"><i class="fas fa-desktop"></i> Postes de Travail</a></li>
+            <li><a href="/conteneurs" class="nav-link"><i class="fas fa-box"></i> Conteneurs</a></li>
+            <li><a href="/metriques" class="nav-link active"><i class="fas fa-chart-line"></i> Métriques</a></li>
+            <li><a href="/parametres" class="nav-link"><i class="fas fa-cog"></i> Paramètres</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <div class="container">
+            <div class="page-content">
+                <h1 class="page-title">Métriques et Performances</h1>
+                
+                <!-- Contrôles -->
+                <div class="metrics-controls fade-in">
+                    <div class="time-filters">
+                        <button class="time-btn active" data-range="1h">1H</button>
+                        <button class="time-btn" data-range="24h">24H</button>
+                        <button class="time-btn" data-range="7d">7J</button>
+                        <button class="time-btn" data-range="30d">30J</button>
+                        <button class="time-btn" data-range="90d">90J</button>
+                    </div>
+                    <button class="export-btn">
+                        <i class="fas fa-download"></i>Exporter les données
+                    </button>
+                </div>
+
+                <!-- Grille des métriques -->
+                <div class="metrics-grid">
+                    <!-- CPU -->
+                    <div class="metric-card fade-in">
+                        <div class="metric-header">
+                            <h3 class="metric-title">Utilisation CPU</h3>
+                            <div class="metric-value" id="cpu-usage">--%</div>
+                        </div>
+                        <div class="metric-chart" id="cpu-chart">
+                            <i class="fas fa-microchip"></i>
+                            <span>Graphique CPU</span>
+                        </div>
+                        <div class="metric-trend trend-up">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+5% depuis hier</span>
+                        </div>
+                    </div>
+
+                    <!-- Mémoire -->
+                    <div class="metric-card fade-in delay-1">
+                        <div class="metric-header">
+                            <h3 class="metric-title">Utilisation Mémoire</h3>
+                            <div class="metric-value" id="memory-usage">--%</div>
+                        </div>
+                        <div class="metric-chart" id="memory-chart">
+                            <i class="fas fa-memory"></i>
+                            <span>Graphique Mémoire</span>
+                        </div>
+                        <div class="metric-trend trend-down">
+                            <i class="fas fa-arrow-down"></i>
+                            <span>-2% depuis hier</span>
+                        </div>
+                    </div>
+
+                    <!-- Stockage -->
+                    <div class="metric-card fade-in delay-2">
+                        <div class="metric-header">
+                            <h3 class="metric-title">Utilisation Stockage</h3>
+                            <div class="metric-value" id="storage-usage">--%</div>
+                        </div>
+                        <div class="metric-chart" id="storage-chart">
+                            <i class="fas fa-hdd"></i>
+                            <span>Graphique Stockage</span>
+                        </div>
+                        <div class="metric-trend trend-up">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+1% depuis hier</span>
+                        </div>
+                    </div>
+
+                    <!-- Réseau -->
+                    <div class="metric-card fade-in delay-3">
+                        <div class="metric-header">
+                            <h3 class="metric-title">Trafic Réseau</h3>
+                            <div class="metric-value" id="network-usage">-- MB/s</div>
+                        </div>
+                        <div class="metric-chart" id="network-chart">
+                            <i class="fas fa-network-wired"></i>
+                            <span>Graphique Réseau</span>
+                        </div>
+                        <div class="metric-trend trend-up">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+15% depuis hier</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tableau des performances -->
+                <div class="performance-table fade-in">
+                    <div class="table-header">
+                        <h2 class="table-title">Performances par Serveur</h2>
+                        <div class="time-filters">
+                            <button class="time-btn active">CPU</button>
+                            <button class="time-btn">Mémoire</button>
+                            <button class="time-btn">Stockage</button>
+                        </div>
+                    </div>
+                    
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Serveur</th>
+                                <th>Statut</th>
+                                <th>CPU</th>
+                                <th>Mémoire</th>
+                                <th>Stockage</th>
+                                <th>Réponse</th>
+                                <th>Tendance</th>
+                            </tr>
+                        </thead>
+                        <tbody id="performance-table-body">
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 2rem;">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                    Chargement des données...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>Système de Monitoring - © 2024 Tous droits réservés</p>
+    </footer>
+
+    <script>
+        // Initialisation de la page des métriques
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTheme();
+            setupTimeFilters();
+            loadMetricsData();
+            loadPerformanceTable();
+            
+            // Actualiser les données toutes les 30 secondes
+            setInterval(loadMetricsData, 30000);
+        });
+
+        // Configuration des filtres de temps
+        function setupTimeFilters() {
+            const timeButtons = document.querySelectorAll('.time-btn');
+            timeButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // Retirer la classe active de tous les boutons
+                    timeButtons.forEach(btn => btn.classList.remove('active'));
+                    // Activer le bouton cliqué
+                    this.classList.add('active');
+                    
+                    // Recharger les données avec le nouveau filtre
+                    const timeRange = this.dataset.range;
+                    loadMetricsData(timeRange);
+                });
+            });
+        }
+
+        // Chargement des données de métriques
+        async function loadMetricsData(timeRange = '1h') {
+            try {
+                const response = await fetch(`/api/metrics/history?range=${timeRange}`);
+                const metrics = await response.json();
+                
+                // Mettre à jour les valeurs actuelles
+                document.getElementById('cpu-usage').textContent = 
+                    metrics.cpu && metrics.cpu.length > 0 ? metrics.cpu[metrics.cpu.length - 1].toFixed(1) + '%' : '--%';
+                document.getElementById('memory-usage').textContent = 
+                    metrics.memory && metrics.memory.length > 0 ? metrics.memory[metrics.memory.length - 1].toFixed(1) + '%' : '--%';
+                document.getElementById('storage-usage').textContent = 
+                    metrics.storage && metrics.storage.length > 0 ? metrics.storage[metrics.storage.length - 1].toFixed(1) + '%' : '--%';
+                document.getElementById('network-usage').textContent = 
+                    '45.2 MB/s'; // Valeur simulée
+                
+                // Mettre à jour les graphiques (simulation)
+                updateChartPlaceholders(metrics, timeRange);
+                
+            } catch (error) {
+                console.error('Erreur lors du chargement des métriques:', error);
+            }
+        }
+
+        // Mise à jour des placeholders de graphiques
+        function updateChartPlaceholders(metrics, timeRange) {
+            const charts = document.querySelectorAll('.metric-chart');
+            charts.forEach(chart => {
+                const metricType = chart.id.replace('-chart', '');
+                let data = [];
+                
+                if (metricType === 'cpu' && metrics.cpu) data = metrics.cpu;
+                else if (metricType === 'memory' && metrics.memory) data = metrics.memory;
+                else if (metricType === 'storage' && metrics.storage) data = metrics.storage;
+                
+                if (data.length > 0) {
+                    const avg = (data.reduce((a, b) => a + b, 0) / data.length).toFixed(1);
+                    const max = Math.max(...data).toFixed(1);
+                    const min = Math.min(...data).toFixed(1);
+                    
+                    chart.innerHTML = `
+                        <div style="text-align: center;">
+                            <i class="fas fa-chart-line" style="font-size: 2rem; margin-bottom: 0.5rem;"></i>
+                            <div>Moy: ${avg}%</div>
+                            <div style="font-size: 0.8rem; opacity: 0.7;">
+                                Min: ${min}% | Max: ${max}%
+                            </div>
+                            <div style="font-size: 0.7rem; opacity: 0.5; margin-top: 0.5rem;">
+                                ${data.length} points - ${timeRange}
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        // Chargement du tableau des performances
+        async function loadPerformanceTable() {
+            try {
+                const response = await fetch('/api/serveurs');
+                const servers = await response.json();
+                
+                const tableBody = document.getElementById('performance-table-body');
+                tableBody.innerHTML = '';
+                
+                if (servers.length === 0) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 2rem;">
+                                Aucun serveur trouvé
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                servers.forEach(server => {
+                    const statusClass = server.status === 'online' ? 'status-optimal' : 
+                                      server.status === 'warning' ? 'status-warning' : 'status-critical';
+                    
+                    const trend = Math.random() > 0.5 ? 'up' : 'down';
+                    const trendIcon = trend === 'up' ? 'fa-arrow-up trend-up' : 'fa-arrow-down trend-down';
+                    
+                    const row = `
+                        <tr>
+                            <td>
+                                <i class="fas fa-server" style="margin-right: 0.5rem;"></i>
+                                ${server.name}
+                            </td>
+                            <td>
+                                <span class="status-indicator ${statusClass}"></span>
+                                ${server.status === 'online' ? 'Optimal' : 
+                                  server.status === 'warning' ? 'Alerte' : 'Critique'}
+                            </td>
+                            <td>${server.cpu_usage}%</td>
+                            <td>${server.memory_usage}%</td>
+                            <td>${server.storage_usage}%</td>
+                            <td>${Math.floor(Math.random() * 50) + 10}ms</td>
+                            <td class="${trend === 'up' ? 'trend-up' : 'trend-down'}">
+                                <i class="fas ${trendIcon}"></i>
+                                ${Math.floor(Math.random() * 10) + 1}%
+                            </td>
+                        </tr>
+                    `;
+                    tableBody.innerHTML += row;
+                });
+                
+            } catch (error) {
+                console.error('Erreur lors du chargement du tableau:', error);
+                const tableBody = document.getElementById('performance-table-body');
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 2rem; color: var(--danger-color);">
+                            Erreur de chargement des données
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Gestion du thème
+        function initializeTheme() {
+            const themeToggle = document.getElementById('themeToggle');
+            const body = document.body;
+
+            const currentTheme = localStorage.getItem('theme');
+            if (currentTheme === 'dark') {
+                body.classList.add('dark-theme');
+            }
+
+            if (themeToggle) {
+                themeToggle.addEventListener('click', () => {
+                    body.classList.toggle('dark-theme');
+                    localStorage.setItem('theme', body.classList.contains('dark-theme') ? 'dark' : 'light');
+                });
+            }
+        }
+    </script>
+</body>
+</html>
