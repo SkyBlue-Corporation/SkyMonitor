@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau de Bord - Supervision Système Style BLUE OPS</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/theme.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="logo-container">
+            <!-- Remplacez par votre logo -->
+            <div class="logo-placeholder">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="logo-text">Monitoring System</div>
+        </div>
+        <div class="header-controls">
+            <div class="theme-toggle" id="themeToggle"></div>
+            <div class="user-profile">
+                <i class="fas fa-user-circle"></i>
+                <span>Admin</span>
+            </div>
+        </div>
+    </header>
+
+    <nav>
+        <ul class="nav-links">
+            <li><a href="index.html" class="nav-link active" data-page="dashboard"><i class="fas fa-tachometer-alt"></i> Tableau de Bord</a></li>
+            <li><a href="pages/serveurs.html" class="nav-link" data-page="serveurs"><i class="fas fa-server"></i> Serveurs</a></li>
+            <li><a href="pages/postes.html" class="nav-link" data-page="postes"><i class="fas fa-desktop"></i> Postes de Travail</a></li>
+            <li><a href="pages/conteneurs.html" class="nav-link" data-page="conteneurs"><i class="fas fa-box"></i> Conteneurs</a></li>
+            <li><a href="pages/metriques.html" class="nav-link" data-page="metriques"><i class="fas fa-chart-line"></i> Métriques</a></li>
+            <li><a href="pages/parametres.html" class="nav-link" data-page="parametres"><i class="fas fa-cog"></i> Paramètres</a></li>
+        </ul>
+    </nav>
+
+    <main id="main-content">
+        <div class="container">
+            <div class="dashboard-header">
+                <h1 class="dashboard-title">Vue d'ensemble du système</h1>
+                <div class="time-filter">
+                    <button class="time-btn active">24H</button>
+                    <button class="time-btn">7J</button>
+                    <button class="time-btn">30J</button>
+                    <button class="time-btn">3M</button>
+                    <button class="time-btn">1A</button>
+                </div>
+            </div>
+
+            <div class="cards-grid">
+                <div class="card fade-in">
+                    <div class="card-header">
+                        <h3 class="card-title">Serveurs</h3>
+                        <div class="card-icon server-icon">
+                            <i class="fas fa-server"></i>
+                        </div>
+                    </div>
+                    <div class="card-value" id="server-count">--</div>
+                    <div class="card-change positive">
+                        <i class="fas fa-sync-alt"></i>
+                        <span>Chargement...</span>
+                    </div>
+                </div>
+
+                <div class="card fade-in delay-1">
+                    <div class="card-header">
+                        <h3 class="card-title">Postes de Travail</h3>
+                        <div class="card-icon workstation-icon">
+                            <i class="fas fa-desktop"></i>
+                        </div>
+                    </div>
+                    <div class="card-value" id="workstation-count">--</div>
+                    <div class="card-change positive">
+                        <i class="fas fa-sync-alt"></i>
+                        <span>Chargement...</span>
+                    </div>
+                </div>
+
+                <div class="card fade-in delay-2">
+                    <div class="card-header">
+                        <h3 class="card-title">Conteneurs</h3>
+                        <div class="card-icon container-icon">
+                            <i class="fas fa-box"></i>
+                        </div>
+                    </div>
+                    <div class="card-value" id="container-count">--</div>
+                    <div class="card-change positive">
+                        <i class="fas fa-sync-alt"></i>
+                        <span>Chargement...</span>
+                    </div>
+                </div>
+
+                <div class="card fade-in delay-3">
+                    <div class="card-header">
+                        <h3 class="card-title">Disponibilité</h3>
+                        <div class="card-icon availability-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+                    <div class="card-value" id="availability-rate">--%</div>
+                    <div class="card-change positive">
+                        <i class="fas fa-sync-alt"></i>
+                        <span>Chargement...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="charts-container">
+                <div class="chart-card fade-in delay-1">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Utilisation des ressources</h3>
+                        <div class="resource-filter">
+                            <button class="resource-btn active">CPU</button>
+                            <button class="resource-btn">RAM</button>
+                            <button class="resource-btn">Stockage</button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-placeholder">
+                            <i class="fas fa-chart-bar"></i>
+                            <p>Graphique d'utilisation des ressources</p>
+                            <small>Les données seront affichées après connexion à l'API</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-card fade-in delay-2">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Alertes récentes</h3>
+                        <button class="btn btn-outline">Voir tout</button>
+                    </div>
+                    <div class="chart-container">
+                        <div class="alerts-placeholder">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <p>Aucune alerte active</p>
+                            <small>Tous les systèmes fonctionnent normalement</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="servers-list fade-in delay-3">
+                <div class="servers-header">
+                    <h3 class="servers-title">Serveurs critiques</h3>
+                    <button class="btn btn-primary">Ajouter un serveur</button>
+                </div>
+                <div id="critical-servers-list">
+                    <div class="server-item">
+                        <div class="server-status status-online"></div>
+                        <div class="server-info">
+                            <div class="server-name">Serveur Web Principal</div>
+                            <div class="server-details">En attente de données...</div>
+                        </div>
+                        <div class="server-actions">
+                            <button class="btn btn-outline">Détails</button>
+                            <button class="btn btn-primary">Gérer</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>Système de Monitoring - © 2024 Tous droits réservés</p>
+    </footer>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
