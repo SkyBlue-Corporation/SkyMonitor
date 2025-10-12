@@ -98,5 +98,9 @@ python scripts/run.py
 ### Dashboard principal
 ![Dashboard SkyMonitor](/monitoring-app/app/static/images/dashboard.png)
 
-### Scan réseau en cours
+### Parametre systeme
 ![Parametre](/monitoring-app/app/static/images/parametre.png)
+
+
+### Metrics
+![Métrics](/monitoring-app/app/static/images/metric.png)
