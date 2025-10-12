@@ -96,7 +96,7 @@ python scripts/run.py
 ## 📸 Captures d'écran
 
 ### Dashboard principal
-![Dashboard SkyMonitor](app/static/images/Capture d’écran_dasboard.png)
+![Dashboard SkyMonitor](/monitoring-app/app/static/images/dasboard.png)
 
 ### Scan réseau en cours
-![Parametre](app/static/images/parametre.png)
+![Parametre](/monitoring-app/app/static/images/parametre.png)
