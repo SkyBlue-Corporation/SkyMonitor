@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tableau de Bord - SkyMonitor</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
     <style>
         /* Variables CSS pour les thèmes */
         :root {
@@ -271,6 +272,10 @@
             background-color: var(--success-color);
         }
 
+        .network-icon {
+            background-color: #9b59b6;
+        }
+
         .card-value {
             font-size: 2rem;
             font-weight: 700;
@@ -290,6 +295,10 @@
 
         .negative {
             color: var(--danger-color);
+        }
+
+        .neutral {
+            color: var(--text-secondary);
         }
 
         /* Graphiques et tableaux */
@@ -440,6 +449,11 @@
             color: var(--text-color);
         }
 
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+
         /* Pied de page */
         footer {
             text-align: center;
@@ -448,6 +462,68 @@
             font-size: 0.9rem;
             border-top: 1px solid var(--border-color);
             margin-top: 2rem;
+        }
+
+        /* Nouvelles classes pour le scan réseau */
+        .scan-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            margin-left: 1rem;
+        }
+
+        .scan-active {
+            background-color: rgba(52, 152, 219, 0.1);
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+        }
+
+        .scan-idle {
+            background-color: rgba(46, 204, 113, 0.1);
+            color: var(--success-color);
+            border: 1px solid var(--success-color);
+        }
+
+        .port-tag {
+            display: inline-block;
+            background: var(--primary-color);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7em;
+            margin: 1px;
+        }
+
+        .network-stats {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .stat-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(52, 152, 219, 0.1);
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--border-color);
         }
 
         /* Animations */
@@ -464,6 +540,16 @@
         .delay-2 { animation-delay: 0.2s; }
         .delay-3 { animation-delay: 0.3s; }
         .delay-4 { animation-delay: 0.4s; }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
 
         /* Responsive */
         @media (max-width: 1024px) {
@@ -549,13 +635,17 @@
     <main>
         <div class="container">
             <div class="dashboard-header">
-                <h1 class="page-title">Tableau de Bord</h1>
+                <h1 class="page-title">
+                    Tableau de Bord
+                    <span class="scan-indicator scan-idle" id="scanStatus">
+                        <i class="fas fa-wifi"></i>
+                        <span id="scanStatusText">En attente de scan</span>
+                    </span>
+                </h1>
                 <div class="time-filter">
-                    <button class="time-btn active">24H</button>
-                    <button class="time-btn">7J</button>
-                    <button class="time-btn">30J</button>
-                    <button class="time-btn">3M</button>
-                    <button class="time-btn">1A</button>
+                    <button class="time-btn active" onclick="setTimeFilter('24h')">24H</button>
+                    <button class="time-btn" onclick="setTimeFilter('7j')">7J</button>
+                    <button class="time-btn" onclick="setTimeFilter('30j')">30J</button>
                 </div>
             </div>
 
@@ -568,10 +658,10 @@
                             <i class="fas fa-server"></i>
                         </div>
                     </div>
-                    <div class="card-value" id="server-count">--</div>
-                    <div class="card-change positive">
-                        <i class="fas fa-arrow-up"></i>
-                        <span>+2 depuis hier</span>
+                    <div class="card-value" id="server-count">0</div>
+                    <div class="card-change neutral" id="server-change">
+                        <i class="fas fa-minus"></i>
+                        <span>En attente de scan</span>
                     </div>
                 </div>
 
@@ -582,10 +672,10 @@
                             <i class="fas fa-desktop"></i>
                         </div>
                     </div>
-                    <div class="card-value" id="workstation-count">--</div>
-                    <div class="card-change negative">
-                        <i class="fas fa-arrow-down"></i>
-                        <span>-5 depuis hier</span>
+                    <div class="card-value" id="workstation-count">0</div>
+                    <div class="card-change neutral" id="workstation-change">
+                        <i class="fas fa-minus"></i>
+                        <span>En attente de scan</span>
                     </div>
                 </div>
 
@@ -596,10 +686,10 @@
                             <i class="fas fa-box"></i>
                         </div>
                     </div>
-                    <div class="card-value" id="container-count">--</div>
-                    <div class="card-change positive">
-                        <i class="fas fa-arrow-up"></i>
-                        <span>+12 depuis hier</span>
+                    <div class="card-value" id="container-count">0</div>
+                    <div class="card-change neutral" id="container-change">
+                        <i class="fas fa-minus"></i>
+                        <span>En attente de scan</span>
                     </div>
                 </div>
 
@@ -610,10 +700,35 @@
                             <i class="fas fa-check-circle"></i>
                         </div>
                     </div>
-                    <div class="card-value" id="availability-rate">--%</div>
-                    <div class="card-change positive">
-                        <i class="fas fa-arrow-up"></i>
-                        <span>+0.2% depuis hier</span>
+                    <div class="card-value" id="availability-rate">0%</div>
+                    <div class="card-change neutral" id="availability-change">
+                        <i class="fas fa-minus"></i>
+                        <span>En attente de scan</span>
+                    </div>
+                </div>
+
+                <!-- Nouvelle carte pour le scan réseau -->
+                <div class="card fade-in delay-4">
+                    <div class="card-header">
+                        <h3 class="card-title">Appareils Réseau</h3>
+                        <div class="card-icon network-icon">
+                            <i class="fas fa-network-wired"></i>
+                        </div>
+                    </div>
+                    <div class="card-value" id="network-devices">0</div>
+                    <div class="card-change neutral" id="network-change">
+                        <i class="fas fa-sync-alt"></i>
+                        <span>Scan manuel requis</span>
+                    </div>
+                    <div class="network-stats">
+                        <div class="stat-badge">
+                            <i class="fas fa-laptop" style="color: var(--primary-color);"></i>
+                            <span id="online-devices">0 en ligne</span>
+                        </div>
+                        <div class="stat-badge">
+                            <i class="fas fa-clock" style="color: var(--warning-color);"></i>
+                            <span id="last-scan">Jamais</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -622,78 +737,54 @@
             <div class="charts-container">
                 <div class="chart-card fade-in delay-1">
                     <div class="chart-header">
-                        <h3 class="chart-title">Utilisation des ressources</h3>
+                        <h3 class="chart-title">Répartition des Appareils</h3>
                         <div class="time-filter">
-                            <button class="time-btn active">CPU</button>
-                            <button class="time-btn">RAM</button>
-                            <button class="time-btn">Stockage</button>
+                            <button class="time-btn active" onclick="setChartType('type')">Par Type</button>
+                            <button class="time-btn" onclick="setChartType('status')">Par Statut</button>
                         </div>
                     </div>
                     <div class="chart-container">
-                        <div class="chart-placeholder" id="resource-chart">
-                            <i class="fas fa-chart-bar"></i>
-                            <p>Graphique d'utilisation des ressources</p>
-                            <small>Chargement des données...</small>
+                        <div class="chart-placeholder" id="distribution-chart">
+                            <i class="fas fa-chart-pie"></i>
+                            <p>Répartition des appareils détectés</p>
+                            <small>Aucune donnée disponible. Lancez un scan pour commencer.</small>
                         </div>
                     </div>
                 </div>
 
                 <div class="chart-card fade-in delay-2">
                     <div class="chart-header">
-                        <h3 class="chart-title">Alertes récentes</h3>
+                        <h3 class="chart-title">Alertes Réseau</h3>
                         <button class="btn btn-outline" id="refresh-alerts">Actualiser</button>
                     </div>
                     <div class="chart-container">
                         <div class="alerts-placeholder" id="alerts-list">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            <p>Aucune alerte active</p>
-                            <small>Tous les systèmes fonctionnent normalement</small>
+                            <i class="fas fa-info-circle"></i>
+                            <p>Aucun scan effectué</p>
+                            <small>Lancez un scan réseau pour détecter les appareils</small>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Liste des serveurs critiques -->
+            <!-- Liste des appareils détectés -->
             <div class="servers-list fade-in delay-3">
                 <div class="servers-header">
-                    <h3 class="servers-title">Serveurs critiques</h3>
-                    <button class="btn btn-primary" id="scan-network">
-                        <i class="fas fa-search"></i> Scanner le réseau
-                    </button>
+                    <h3 class="servers-title">Appareils Réseau Détectés</h3>
+                    <div>
+                        <button class="btn btn-outline" id="refresh-network">
+                            <i class="fas fa-sync-alt"></i> Actualiser
+                        </button>
+                        <button class="btn btn-primary" id="scan-network">
+                            <i class="fas fa-search"></i> Scanner le réseau
+                        </button>
+                    </div>
                 </div>
-                <div id="critical-servers-list">
-                    <div class="server-item">
-                        <div class="server-status status-online"></div>
-                        <div class="server-info">
-                            <div class="server-name">Serveur Web Principal</div>
-                            <div class="server-details">IP: 192.168.1.10 | CPU: 45% | RAM: 62%</div>
-                        </div>
-                        <div class="server-actions">
-                            <button class="btn btn-outline">Détails</button>
-                            <button class="btn btn-primary">Gérer</button>
-                        </div>
-                    </div>
-                    <div class="server-item">
-                        <div class="server-status status-warning"></div>
-                        <div class="server-info">
-                            <div class="server-name">Base de Données</div>
-                            <div class="server-details">IP: 192.168.1.11 | CPU: 82% | RAM: 45%</div>
-                        </div>
-                        <div class="server-actions">
-                            <button class="btn btn-outline">Détails</button>
-                            <button class="btn btn-primary">Gérer</button>
-                        </div>
-                    </div>
-                    <div class="server-item">
-                        <div class="server-status status-online"></div>
-                        <div class="server-info">
-                            <div class="server-name">Serveur d'Applications</div>
-                            <div class="server-details">IP: 192.168.1.12 | CPU: 23% | RAM: 41%</div>
-                        </div>
-                        <div class="server-actions">
-                            <button class="btn btn-outline">Détails</button>
-                            <button class="btn btn-primary">Gérer</button>
-                        </div>
+                <div id="network-devices-list">
+                    <div class="empty-state">
+                        <i class="fas fa-network-wired"></i>
+                        <h3>Aucun appareil détecté</h3>
+                        <p>Cliquez sur "Scanner le réseau" pour découvrir les appareils connectés</p>
                     </div>
                 </div>
             </div>
@@ -705,39 +796,234 @@
     </footer>
 
     <script>
+        // État global des données
+        let networkData = {
+            devices: [],
+            stats: {
+                servers: 0,
+                workstations: 0,
+                containers: 0,
+                total: 0,
+                online: 0,
+                availability: 0
+            },
+            lastScan: null
+        };
+
         // Initialisation du dashboard
         document.addEventListener('DOMContentLoaded', function() {
             initializeTheme();
-            loadDashboardData();
-            
-            // Actualiser les données toutes les 30 secondes
-            setInterval(loadDashboardData, 30000);
+            initializeWebSocket();
+            loadInitialData();
             
             // Événements
             document.getElementById('scan-network').addEventListener('click', scanNetwork);
             document.getElementById('refresh-alerts').addEventListener('click', refreshAlerts);
+            document.getElementById('refresh-network').addEventListener('click', refreshNetworkData);
         });
 
-        // Chargement des données du dashboard
-        async function loadDashboardData() {
+        // WebSocket pour les mises à jour en temps réel
+        function initializeWebSocket() {
             try {
-                const response = await fetch('/api/dashboard/stats');
-                const data = await response.json();
+                const socket = io();
                 
-                // Mettre à jour les compteurs
-                document.getElementById('server-count').textContent = data.servers;
-                document.getElementById('workstation-count').textContent = data.workstations;
-                document.getElementById('container-count').textContent = data.containers;
-                document.getElementById('availability-rate').textContent = data.availability_rate + '%';
+                socket.on('connect', function() {
+                    console.log('Connecté au serveur WebSocket');
+                    updateScanStatus('idle', 'Prêt pour le scan');
+                });
+                
+                socket.on('disconnect', function() {
+                    console.log('Déconnecté du serveur WebSocket');
+                    updateScanStatus('idle', 'Connexion perdue');
+                });
+                
+                socket.on('network_update', function(data) {
+                    handleNetworkUpdate(data);
+                });
+                
+                socket.on('scan_progress', function(data) {
+                    updateScanProgress(data);
+                });
                 
             } catch (error) {
-                console.error('Erreur lors du chargement des données:', error);
-                // Valeurs par défaut en cas d'erreur
-                document.getElementById('server-count').textContent = '12';
-                document.getElementById('workstation-count').textContent = '45';
-                document.getElementById('container-count').textContent = '23';
-                document.getElementById('availability-rate').textContent = '99.8%';
+                console.error('Erreur WebSocket:', error);
+                updateScanStatus('idle', 'Mode hors ligne');
             }
+        }
+
+        // Chargement des données initiales
+        async function loadInitialData() {
+            try {
+                const response = await fetch('/api/network/status');
+                const data = await response.json();
+                
+                if (data.success) {
+                    handleNetworkUpdate(data.data);
+                } else {
+                    showEmptyState();
+                }
+            } catch (error) {
+                console.error('Erreur chargement initial:', error);
+                showEmptyState();
+            }
+        }
+
+        // Gestion des mises à jour réseau
+        function handleNetworkUpdate(data) {
+            networkData = data;
+            updateDashboardStats();
+            updateDevicesList();
+            updateLastScanTime();
+        }
+
+        // Mise à jour des statistiques du dashboard
+        function updateDashboardStats() {
+            const stats = networkData.stats;
+            
+            // Mettre à jour les compteurs
+            document.getElementById('server-count').textContent = stats.servers;
+            document.getElementById('workstation-count').textContent = stats.workstations;
+            document.getElementById('container-count').textContent = stats.containers;
+            document.getElementById('network-devices').textContent = stats.total;
+            document.getElementById('online-devices').textContent = `${stats.online} en ligne`;
+            document.getElementById('availability-rate').textContent = `${stats.availability}%`;
+            
+            // Mettre à jour les indicateurs de changement
+            updateChangeIndicators(stats);
+            
+            // Mettre à jour les graphiques
+            updateDistributionChart();
+        }
+
+        // Mise à jour des indicateurs de changement
+        function updateChangeIndicators(stats) {
+            const changes = networkData.changes || {};
+            
+            // Serveurs
+            updateChangeElement('server-change', changes.servers || 0, 'serveurs');
+            
+            // Postes de travail
+            updateChangeElement('workstation-change', changes.workstations || 0, 'postes');
+            
+            // Conteneurs
+            updateChangeElement('container-change', changes.containers || 0, 'conteneurs');
+            
+            // Disponibilité
+            updateChangeElement('availability-change', changes.availability || 0, '%', true);
+            
+            // Réseau
+            updateChangeElement('network-change', changes.total || 0, 'appareils');
+        }
+
+        function updateChangeElement(elementId, change, unit, isPercentage = false) {
+            const element = document.getElementById(elementId);
+            const changeValue = Math.abs(change);
+            const changeText = isPercentage ? 
+                `${change >= 0 ? '+' : ''}${change}${unit} depuis le dernier scan` :
+                `${change >= 0 ? '+' : ''}${change} ${unit} depuis le dernier scan`;
+            
+            if (change > 0) {
+                element.className = 'card-change positive';
+                element.innerHTML = `<i class="fas fa-arrow-up"></i><span>${changeText}</span>`;
+            } else if (change < 0) {
+                element.className = 'card-change negative';
+                element.innerHTML = `<i class="fas fa-arrow-down"></i><span>${changeText}</span>`;
+            } else {
+                element.className = 'card-change neutral';
+                element.innerHTML = `<i class="fas fa-minus"></i><span>Aucun changement</span>`;
+            }
+        }
+
+        // Mise à jour de la liste des appareils
+        function updateDevicesList() {
+            const devicesList = document.getElementById('network-devices-list');
+            const devices = networkData.devices;
+            
+            if (!devices || devices.length === 0) {
+                devicesList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-network-wired"></i>
+                        <h3>Aucun appareil détecté</h3>
+                        <p>Le scan n'a trouvé aucun appareil sur le réseau</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            devicesList.innerHTML = '';
+            
+            devices.forEach(device => {
+                const deviceElement = createDeviceElement(device);
+                devicesList.appendChild(deviceElement);
+            });
+        }
+
+        // Création d'un élément d'appareil
+        function createDeviceElement(device) {
+            const div = document.createElement('div');
+            div.className = 'server-item';
+            
+            const statusClass = device.status === 'online' ? 'status-online' : 
+                              device.status === 'warning' ? 'status-warning' : 'status-offline';
+            
+            const deviceType = getDeviceTypeLabel(device.type);
+            const portsHTML = device.open_ports && device.open_ports.length > 0 ? 
+                device.open_ports.map(port => `<span class="port-tag">${getPortName(port)}</span>`).join('') : '';
+            
+            div.innerHTML = `
+                <div class="server-status ${statusClass}"></div>
+                <div class="server-info">
+                    <div class="server-name">${device.hostname || device.name || device.ip}</div>
+                    <div class="server-details">
+                        IP: ${device.ip} | Type: ${deviceType}
+                        ${device.response_time ? ` | Temps réponse: ${device.response_time}ms` : ''}
+                        ${portsHTML ? `<br>Ports: ${portsHTML}` : ''}
+                    </div>
+                </div>
+                <div class="server-actions">
+                    <button class="btn btn-outline" onclick="showDeviceDetails('${device.ip}')">Détails</button>
+                    <button class="btn btn-primary" onclick="pingDevice('${device.ip}')">Tester</button>
+                </div>
+            `;
+            
+            return div;
+        }
+
+        // Mise à jour du graphique de répartition
+        function updateDistributionChart() {
+            const chartElement = document.getElementById('distribution-chart');
+            const stats = networkData.stats;
+            
+            if (stats.total === 0) {
+                chartElement.innerHTML = `
+                    <i class="fas fa-chart-pie"></i>
+                    <p>Répartition des appareils détectés</p>
+                    <small>Aucune donnée disponible. Lancez un scan pour commencer.</small>
+                `;
+                return;
+            }
+            
+            // Simulation simple d'un graphique avec du HTML/CSS
+            chartElement.innerHTML = `
+                <div style="display: flex; flex-direction: column; gap: 1rem; width: 100%; height: 100%; padding: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>Serveurs: ${stats.servers}</span>
+                        <div style="width: 100px; height: 20px; background: var(--primary-color); border-radius: 10px;"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>Postes de travail: ${stats.workstations}</span>
+                        <div style="width: ${(stats.workstations / stats.total) * 100}px; height: 20px; background: var(--success-color); border-radius: 10px;"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>Conteneurs: ${stats.containers}</span>
+                        <div style="width: ${(stats.containers / stats.total) * 100}px; height: 20px; background: var(--warning-color); border-radius: 10px;"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>Autres: ${stats.total - stats.servers - stats.workstations - stats.containers}</span>
+                        <div style="width: ${Math.max(((stats.total - stats.servers - stats.workstations - stats.containers) / stats.total) * 100, 10)}px; height: 20px; background: var(--text-secondary); border-radius: 10px;"></div>
+                    </div>
+                </div>
+            `;
         }
 
         // Scanner le réseau
@@ -748,8 +1034,10 @@
             button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Scan en cours...';
             button.disabled = true;
             
+            updateScanStatus('active', 'Scan en cours...');
+            
             try {
-                const response = await fetch('/api/scan-network', {
+                const response = await fetch('/api/network/scan', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -759,29 +1047,123 @@
                 const result = await response.json();
                 
                 if (result.success) {
-                    alert('Scan réseau terminé avec succès!');
-                    loadDashboardData(); // Recharger les données
+                    updateScanStatus('idle', 'Scan terminé');
+                    // Les données seront mises à jour via WebSocket
                 } else {
-                    alert('Erreur lors du scan: ' + result.error);
+                    alert('Erreur lors du scan: ' + result.message);
+                    updateScanStatus('idle', 'Erreur de scan');
                 }
                 
             } catch (error) {
                 console.error('Erreur lors du scan:', error);
                 alert('Erreur de connexion lors du scan');
+                updateScanStatus('idle', 'Erreur de connexion');
             } finally {
-                button.innerHTML = originalText;
-                button.disabled = false;
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                }, 2000);
+            }
+        }
+
+        // Actualiser les données réseau
+        async function refreshNetworkData() {
+            const button = document.getElementById('refresh-network');
+            const originalText = button.innerHTML;
+            
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            button.disabled = true;
+            
+            try {
+                await loadInitialData();
+            } finally {
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                }, 1000);
+            }
+        }
+
+        // Mettre à jour la progression du scan
+        function updateScanProgress(data) {
+            if (data.progress) {
+                updateScanStatus('active', `Scan: ${data.progress}%`);
+            }
+        }
+
+        // Mettre à jour le statut du scan
+        function updateScanStatus(status, text) {
+            const scanStatus = document.getElementById('scanStatus');
+            const scanStatusText = document.getElementById('scanStatusText');
+            
+            scanStatus.className = `scan-indicator scan-${status}`;
+            scanStatusText.textContent = text;
+            
+            if (status === 'active') {
+                scanStatus.classList.add('pulse');
+            } else {
+                scanStatus.classList.remove('pulse');
+            }
+        }
+
+        // Mettre à jour l'heure du dernier scan
+        function updateLastScanTime() {
+            const lastScanElement = document.getElementById('last-scan');
+            if (networkData.lastScan) {
+                const lastScan = new Date(networkData.lastScan);
+                lastScanElement.textContent = lastScan.toLocaleTimeString();
+            } else {
+                lastScanElement.textContent = 'Jamais';
             }
         }
 
         // Actualiser les alertes
         function refreshAlerts() {
             const alertsList = document.getElementById('alerts-list');
-            alertsList.innerHTML = `
-                <i class="fas fa-check-circle" style="color: var(--success-color);"></i>
-                <p>Aucune alerte critique</p>
-                <small>Dernière vérification: ${new Date().toLocaleTimeString()}</small>
-            `;
+            const stats = networkData.stats;
+            
+            if (stats.total === 0) {
+                alertsList.innerHTML = `
+                    <i class="fas fa-info-circle"></i>
+                    <p>Aucun scan effectué</p>
+                    <small>Lancez un scan réseau pour détecter les appareils</small>
+                `;
+                return;
+            }
+            
+            const offlineCount = stats.total - stats.online;
+            
+            if (offlineCount === 0) {
+                alertsList.innerHTML = `
+                    <i class="fas fa-check-circle" style="color: var(--success-color);"></i>
+                    <p>Tous les appareils sont en ligne</p>
+                    <small>Dernière vérification: ${new Date().toLocaleTimeString()}</small>
+                `;
+            } else {
+                alertsList.innerHTML = `
+                    <i class="fas fa-exclamation-triangle" style="color: var(--warning-color);"></i>
+                    <p>${offlineCount} appareil(s) hors ligne</p>
+                    <small>Disponibilité: ${stats.availability}%</small>
+                `;
+            }
+        }
+
+        // État vide
+        function showEmptyState() {
+            document.getElementById('server-count').textContent = '0';
+            document.getElementById('workstation-count').textContent = '0';
+            document.getElementById('container-count').textContent = '0';
+            document.getElementById('network-devices').textContent = '0';
+            document.getElementById('availability-rate').textContent = '0%';
+            document.getElementById('online-devices').textContent = '0 en ligne';
+            document.getElementById('last-scan').textContent = 'Jamais';
+            
+            // Réinitialiser les indicateurs de changement
+            const changeElements = document.querySelectorAll('.card-change');
+            changeElements.forEach(el => {
+                el.className = 'card-change neutral';
+                el.innerHTML = '<i class="fas fa-minus"></i><span>En attente de scan</span>';
+            });
         }
 
         // Gestion du thème
@@ -800,6 +1182,59 @@
                     localStorage.setItem('theme', body.classList.contains('dark-theme') ? 'dark' : 'light');
                 });
             }
+        }
+
+        // Fonctions utilitaires
+        function getPortName(port) {
+            const portNames = {
+                22: 'SSH', 80: 'HTTP', 443: 'HTTPS', 3389: 'RDP',
+                21: 'FTP', 53: 'DNS', 445: 'SMB', 23: 'Telnet',
+                25: 'SMTP', 110: 'POP3', 143: 'IMAP', 993: 'IMAPS',
+                995: 'POP3S', 587: 'SMTP', 3306: 'MySQL', 5432: 'PostgreSQL',
+                27017: 'MongoDB'
+            };
+            return portNames[port] || port;
+        }
+
+        function getDeviceTypeLabel(type) {
+            const types = {
+                'server': 'Serveur',
+                'workstation': 'Poste de travail',
+                'container': 'Conteneur',
+                'network_device': 'Appareil réseau',
+                'web_server': 'Serveur Web',
+                'ftp_server': 'Serveur FTP',
+                'dns_server': 'Serveur DNS',
+                'file_server': 'Serveur de fichiers'
+            };
+            return types[type] || type;
+        }
+
+        function showDeviceDetails(ip) {
+            const device = networkData.devices.find(d => d.ip === ip);
+            if (device) {
+                alert(`Détails de l'appareil:\n\nIP: ${device.ip}\nNom: ${device.hostname || 'N/A'}\nType: ${getDeviceTypeLabel(device.type)}\nStatut: ${device.status}\nPorts ouverts: ${device.open_ports ? device.open_ports.join(', ') : 'Aucun'}`);
+            }
+        }
+
+        async function pingDevice(ip) {
+            try {
+                const response = await fetch(`/api/network/ping/${ip}`);
+                const result = await response.json();
+                alert(`Test de ping ${ip}: ${result.online ? 'En ligne' : 'Hors ligne'}`);
+            } catch (error) {
+                alert('Erreur lors du test de ping');
+            }
+        }
+
+        function setTimeFilter(filter) {
+            // Implémentation future pour filtrer par période
+            console.log('Filtre temporel:', filter);
+        }
+
+        function setChartType(type) {
+            // Implémentation future pour changer le type de graphique
+            console.log('Type de graphique:', type);
         }
     </script>
 </body>

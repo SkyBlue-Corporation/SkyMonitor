@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, jsonify, request
 from app.models import Server, db
 from app.services.monitoring_service import MonitoringService
 from datetime import datetime, timedelta
+from scanner import network_scanner
 
 main_bp = Blueprint('main', __name__)
 monitoring_service = MonitoringService()
@@ -32,7 +33,7 @@ def conteneurs():
 def metriques():
     return render_template('metriques.html')
 
-@main_bp.route('/parametres')
+@main_bp.route('/paramètres')
 def parametres():
     return render_template('paramètres.html')
 

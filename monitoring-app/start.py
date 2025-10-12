@@ -2,6 +2,9 @@
 import os
 import sys
 import subprocess
+import socket
+import threading
+from concurrent.futures import ThreadPoolExecutor
 
 def is_venv_active():
     """Vérifie si un environnement virtuel est actif"""
@@ -35,8 +38,92 @@ def check_and_install_requirements():
             print(f"❌ Échec de l'installation: {e}")
             return False
 
-def create_sample_data():
-    """Crée des données d'exemple"""
+def scan_host(ip, port=22, timeout=1):
+    """
+    Scan un hôte sur un port spécifique (SSH par défaut)
+    Retourne True si le port est ouvert
+    """
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.settimeout(timeout)
+            result = sock.connect_ex((ip, port))
+            return result == 0
+    except:
+        return False
+
+def get_hostname(ip):
+    """
+    Tente de récupérer le nom d'hôte
+    """
+    try:
+        hostname = socket.getfqdn(ip)
+        return hostname if hostname != ip else f"host-{ip.replace('.', '-')}"
+    except:
+        return f"host-{ip.replace('.', '-')}"
+
+def detect_device_type(ip, open_ports):
+    """
+    Détermine le type d'appareil basé sur les ports ouverts
+    """
+    if 22 in open_ports:  # SSH
+        # Vérifier d'autres ports pour affiner la détection
+        if 80 in open_ports or 443 in open_ports:  # HTTP/HTTPS
+            return "server"
+        elif 3389 in open_ports:  # RDP
+            return "workstation"
+        else:
+            return "server"
+    elif 3389 in open_ports:  # RDP
+        return "workstation"
+    elif 80 in open_ports or 443 in open_ports:  # HTTP/HTTPS
+        return "server"
+    else:
+        return "unknown"
+
+def scan_network(subnet="192.168.1", ports_to_scan=[22, 80, 443, 3389, 21]):
+    """
+    Scan le réseau pour trouver des appareils actifs
+    """
+    print(f"🔍 Scan du réseau {subnet}.0/24...")
+    active_hosts = []
+    
+    def check_host(host_ip):
+        open_ports = []
+        for port in ports_to_scan:
+            if scan_host(host_ip, port):
+                open_ports.append(port)
+        
+        if open_ports:
+            hostname = get_hostname(host_ip)
+            device_type = detect_device_type(host_ip, open_ports)
+            
+            host_info = {
+                'ip': host_ip,
+                'hostname': hostname,
+                'open_ports': open_ports,
+                'type': device_type,
+                'status': 'online'
+            }
+            return host_info
+        return None
+
+    # Scanner les 254 hôtes possibles
+    with ThreadPoolExecutor(max_workers=50) as executor:
+        futures = []
+        for i in range(1, 255):
+            host_ip = f"{subnet}.{i}"
+            futures.append(executor.submit(check_host, host_ip))
+        
+        for future in futures:
+            result = future.result()
+            if result:
+                active_hosts.append(result)
+                print(f"✅ {result['ip']} - {result['hostname']} ({result['type']}) - Ports: {result['open_ports']}")
+
+    return active_hosts
+
+def create_network_data():
+    """Crée la base de données avec les appareils réseau détectés"""
     try:
         from app import create_app, db
         from app.models import Server
@@ -47,26 +134,84 @@ def create_sample_data():
             
             # Vérifier si des données existent déjà
             if Server.query.count() == 0:
-                # Créer des données d'exemple
-                sample_servers = [
-                    Server(name='Serveur Web Principal', ip_address='192.168.1.10', status='online', cpu_usage=25.0, memory_usage=60.0, type='server'),
-                    Server(name='Base de Données', ip_address='192.168.1.11', status='warning', cpu_usage=85.0, memory_usage=45.0, type='server'),
-                    Server(name='PC-Administration', ip_address='192.168.1.50', status='online', cpu_usage=10.0, memory_usage=40.0, type='workstation'),
-                    Server(name='Container-App', ip_address='192.168.1.100', status='online', cpu_usage=5.0, memory_usage=20.0, type='container'),
-                ]
+                print("🔄 Scan du réseau en cours...")
                 
-                db.session.add_all(sample_servers)
+                # Déterminer le sous-réseau à scanner
+                subnet = get_local_ip()
+                
+                # Scanner le réseau
+                network_devices = scan_network(subnet)
+                
+                if not network_devices:
+                    print("❌ Aucun appareil trouvé. Vérifiez le sous-réseau.")
+                    # Ajouter un exemple local pour démonstration
+                    local_device = Server(
+                        name='Serveur Local',
+                        ip_address='127.0.0.1',
+                        status='online',
+                        cpu_usage=0.0,
+                        memory_usage=0.0,
+                        type='server'
+                    )
+                    db.session.add(local_device)
+                else:
+                    # Ajouter les appareils détectés à la base de données
+                    for device in network_devices:
+                        server = Server(
+                            name=device['hostname'],
+                            ip_address=device['ip'],
+                            status='online',
+                            cpu_usage=0.0,
+                            memory_usage=0.0,
+                            type=device['type']
+                        )
+                        db.session.add(server)
+                
                 db.session.commit()
-                print("✅ Données d'exemple créées")
+                print(f"✅ {len(network_devices)} appareils réseau ajoutés à la base de données")
             else:
                 print("✅ Base de données déjà initialisée")
                 
     except Exception as e:
         print(f"⚠️  Attention lors de la création des données: {e}")
+        print("📋 Assurez-vous que:")
+        print("   - Vous êtes connecté au réseau")
+        print("   - Le sous-réseau est correct")
+        print("   - Les ports de scan ne sont pas bloqués par un firewall")
+
+def get_local_ip():
+    """Récupère l'adresse IP locale pour déterminer le sous-réseau"""
+    try:
+        # Créer une socket pour déterminer l'IP locale
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.connect(("8.8.8.8", 80))
+            local_ip = s.getsockname()[0]
+            # Retourner les 3 premiers octets
+            return '.'.join(local_ip.split('.')[:3])
+    except:
+        return "192.168.1"  # Fallback
+
+def init_database():
+    """Initialise la base de données"""
+    try:
+        from app import create_app, db
+        
+        app = create_app()
+        with app.app_context():
+            db.create_all()
+            print("✅ Base de données initialisée")
+            
+            # Vérifier si des données existent
+            from app.models import Server
+            count = Server.query.count()
+            print(f"📊 {count} appareils dans la base")
+            
+    except Exception as e:
+        print(f"❌ Erreur initialisation DB: {e}")
 
 def main():
     """Fonction principale"""
-    print("🚀 Démarrage du système de monitoring...")
+    print("🚀 Démarrage du système de monitoring réseau...")
     print(f"📁 Répertoire: {os.getcwd()}")
     
     # Vérifier l'environnement virtuel
@@ -92,8 +237,15 @@ def main():
     if not check_and_install_requirements():
         return
     
-    # Créer les données d'exemple
-    create_sample_data()
+    # Détecter le sous-réseau automatiquement
+    subnet = get_local_ip()
+    print(f"🌐 Sous-réseau détecté: {subnet}.0/24")
+    
+    # Initialiser la base de données
+    init_database()
+    
+    # Créer les données réseau (scan automatique)
+    create_network_data()
     
     # Démarrer Flask
     print("\n🌐 Démarrage du serveur Flask...")
@@ -103,6 +255,7 @@ def main():
         print("✅ APPLICATION PRÊTE!")
         print("="*50)
         print("📊 Accédez à: http://localhost:5000")
+        print("🔍 Scan réseau automatique activé")
         print("🛑 Pour arrêter: Ctrl+C")
         print("="*50)
         
