@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Accueil - Système de Monitoring</title>
+    <title>Welcome - Sentinel_Blue</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         /* Variables CSS pour les thèmes */
@@ -69,23 +69,22 @@
             gap: 1rem;
         }
 
-        .logo-placeholder {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            border-radius: 15px;
+        .logo {
+            width: 90px;                            /* Taille du logo */
+            height: 90px;
+            border-radius: 15px;                    /* Coins arrondis */
+            overflow: hidden;                       /* Coupe tout ce qui dépasse des bords arrondis */
+            box-shadow: var(--shadow, 0 4px 8px rgba(0, 0, 0, 0.2));  /* Ombre douce */
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
-            font-size: 2rem;
-            box-shadow: var(--shadow);
+            background-color: #fff;                 /* Fond neutre en cas d'image transparente */
         }
 
-        .logo-text {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: var(--primary-color);
+    .logo img {
+        width: 100%;                            
+        height: 100%;                           
+        object-fit: cover;          
         }
 
         .header-controls {
@@ -393,7 +392,7 @@
             <div class="logo-placeholder">
                 <i class="fas fa-chart-network"></i>
             </div>
-            <div class="logo-text">Monitoring Hub</div>
+            <div class="logo-text"><h1>Sentinel_Hub</h1></div>
         </div>
         <div class="header-controls">
             <div class="theme-toggle" id="themeToggle"></div>
@@ -618,9 +617,9 @@
             <a href="/metriques" class="footer-link">Métriques</a>
             <a href="/parametres" class="footer-link">Paramètres</a>
         </div>
-        <p>Système de Monitoring - © 2024 Tous droits réservés</p>
+        <p>SkyBlue_Corporation - © 2025 Tous droits réservés</p>
         <p style="margin-top: 0.5rem; font-size: 0.8rem; opacity: 0.7;">
-            Version 2.1.0 | Dernière mise à jour: 15/01/2024
+            Version 1.1.0 | Dernière mise à jour: 12/10/2025
         </p>
     </footer>
 

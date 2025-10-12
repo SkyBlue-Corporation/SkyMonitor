@@ -69,17 +69,22 @@
             gap: 1rem;
         }
 
-        .logo-placeholder {
-            width: 50px;
-            height: 50px;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            border-radius: 10px;
+         .logo {
+            width: 90px;                            /* Taille du logo */
+            height: 90px;
+            border-radius: 15px;                    /* Coins arrondis */
+            overflow: hidden;                       /* Coupe tout ce qui dépasse des bords arrondis */
+            box-shadow: var(--shadow, 0 4px 8px rgba(0, 0, 0, 0.2));  /* Ombre douce */
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
-            font-size: 1.5rem;
-            box-shadow: var(--shadow);
+            background-color: #fff;                 /* Fond neutre en cas d'image transparente */
+        }
+
+        .logo img {
+        width: 100%;                            
+        height: 100%;                           
+        object-fit: cover;          
         }
 
         .logo-text {
@@ -426,7 +431,7 @@
     </main>
 
     <footer>
-        <p>Système de Monitoring - © 2024 Tous droits réservés</p>
+        <p>SkyBlue_Corporation - © 2025 Tous droits réservés</p>
     </footer>
 
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
