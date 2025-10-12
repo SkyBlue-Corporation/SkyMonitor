@@ -229,9 +229,17 @@ def main():
         print("\n4. Redémarrer ce script:")
         print("   python start.py")
         print("\n" + "="*60)
-        return
+        return False
+    try:
+            # Installer les requirements
+            subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
+            print("✅ Dépendances installées avec succès")
+            return True
+    except subprocess.CalledProcessError as e:
+            print(f"❌ Échec de l'installation: {e}")
+            return False
     
-    print(f"✅ Environnement virtuel: {sys.prefix}")
+    #print(f"✅ Environnement virtuel: {sys.prefix}")
     
     # Vérifier et installer les dépendances
     if not check_and_install_requirements():

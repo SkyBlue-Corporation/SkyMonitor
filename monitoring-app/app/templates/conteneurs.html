@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Conteneurs - SkyMonitor</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
     <style>
         /* Variables CSS pour les thèmes */
         :root {
@@ -283,15 +284,15 @@
             border-radius: 50%;
         }
 
-        .status-running {
+        .status-online {
             background-color: var(--success-color);
         }
 
-        .status-stopped {
+        .status-offline {
             background-color: var(--danger-color);
         }
 
-        .status-paused {
+        .status-warning {
             background-color: var(--warning-color);
         }
 
@@ -391,9 +392,47 @@
             color: white;
         }
 
-        .btn-warning {
-            background-color: var(--warning-color);
-            color: white;
+        /* État vide */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+            grid-column: 1 / -1;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            color: var(--border-color);
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+        }
+
+        /* Indicateur de scan */
+        .scan-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            margin-left: 1rem;
+        }
+
+        .scan-active {
+            background-color: rgba(52, 152, 219, 0.1);
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+        }
+
+        .scan-idle {
+            background-color: rgba(46, 204, 113, 0.1);
+            color: var(--success-color);
+            border: 1px solid var(--success-color);
         }
 
         /* Actions globales */
@@ -427,6 +466,16 @@
         .delay-1 { animation-delay: 0.1s; }
         .delay-2 { animation-delay: 0.2s; }
         .delay-3 { animation-delay: 0.3s; }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
 
         /* Responsive */
         @media (max-width: 768px) {
@@ -484,24 +533,30 @@
 
     <main>
         <div class="container">
-            <h1 class="page-title">Gestion des Conteneurs Docker</h1>
+            <h1 class="page-title">
+                Conteneurs Détectés
+                <span class="scan-indicator scan-idle" id="scanStatus">
+                    <i class="fas fa-wifi"></i>
+                    <span id="scanStatusText">Scan réseau actif</span>
+                </span>
+            </h1>
             
             <!-- Statistiques -->
             <div class="stats-grid fade-in">
                 <div class="stat-card">
-                    <div class="stat-value" id="total-containers">--</div>
+                    <div class="stat-value" id="total-containers">0</div>
                     <div class="stat-label">Total Conteneurs</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value" id="running-containers">--</div>
-                    <div class="stat-label">En Cours</div>
+                    <div class="stat-value" id="online-containers">0</div>
+                    <div class="stat-label">En Ligne</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value" id="stopped-containers">--</div>
-                    <div class="stat-label">Arrêtés</div>
+                    <div class="stat-value" id="offline-containers">0</div>
+                    <div class="stat-label">Hors Ligne</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value" id="cpu-usage">--%</div>
+                    <div class="stat-value" id="cpu-usage">0%</div>
                     <div class="stat-label">CPU Moyen</div>
                 </div>
             </div>
@@ -512,9 +567,8 @@
                     <label class="filter-label">Statut</label>
                     <select class="filter-select" id="status-filter">
                         <option value="all">Tous les statuts</option>
-                        <option value="running">En cours</option>
-                        <option value="stopped">Arrêtés</option>
-                        <option value="paused">En pause</option>
+                        <option value="online">En ligne</option>
+                        <option value="offline">Hors ligne</option>
                     </select>
                 </div>
                 <div class="filter-group">
@@ -523,40 +577,23 @@
                         <option value="name">Nom</option>
                         <option value="status">Statut</option>
                         <option value="cpu">Utilisation CPU</option>
-                        <option value="memory">Utilisation Mémoire</option>
                     </select>
                 </div>
                 <div class="filter-group">
                     <label class="filter-label">Recherche</label>
-                    <input type="text" class="filter-select" id="search-filter" placeholder="Nom du conteneur...">
+                    <input type="text" class="filter-select" id="search-filter" placeholder="IP ou nom...">
                 </div>
             </div>
 
             <!-- Grille des conteneurs -->
             <div class="containers-grid" id="containers-grid">
-                <!-- Les conteneurs seront chargés dynamiquement ici -->
-                <div class="container-card fade-in delay-2">
-                    <div class="container-header">
-                        <div class="container-name">
-                            <div class="container-status status-running"></div>
-                            Chargement...
-                        </div>
-                    </div>
-                    <div class="container-image">Image: ...</div>
-                    <div class="container-metrics">
-                        <div class="metric">
-                            <div class="metric-value">--%</div>
-                            <div class="metric-label">CPU</div>
-                        </div>
-                        <div class="metric">
-                            <div class="metric-value">--%</div>
-                            <div class="metric-label">Mémoire</div>
-                        </div>
-                    </div>
-                    <div class="container-actions">
-                        <button class="btn btn-outline">Détails</button>
-                        <button class="btn btn-primary">Gérer</button>
-                    </div>
+                <div class="empty-state">
+                    <i class="fas fa-box"></i>
+                    <h3>Aucun conteneur détecté</h3>
+                    <p>Les conteneurs seront affichés ici après un scan réseau</p>
+                    <button class="btn btn-primary" onclick="scanNetwork()" style="margin-top: 1rem;">
+                        <i class="fas fa-search"></i> Scanner le réseau
+                    </button>
                 </div>
             </div>
 
@@ -565,14 +602,8 @@
                 <button class="btn btn-outline" id="refresh-containers">
                     <i class="fas fa-sync-alt"></i> Actualiser
                 </button>
-                <button class="btn btn-primary" id="create-container">
-                    <i class="fas fa-plus"></i> Nouveau Conteneur
-                </button>
-                <button class="btn btn-success" id="start-all">
-                    <i class="fas fa-play"></i> Tout Démarrer
-                </button>
-                <button class="btn btn-danger" id="stop-all">
-                    <i class="fas fa-stop"></i> Tout Arrêter
+                <button class="btn btn-primary" id="scan-network">
+                    <i class="fas fa-search"></i> Scanner le réseau
                 </button>
             </div>
         </div>
@@ -583,82 +614,301 @@
     </footer>
 
     <script>
-        // Données simulées pour les conteneurs
-        const sampleContainers = [
-            {
-                id: 1,
-                name: "web-app",
-                image: "nginx:latest",
-                status: "running",
-                cpu: 15.5,
-                memory: 245,
-                memoryLimit: 512,
-                ports: ["80:80", "443:443"],
-                createdAt: "2024-01-15T10:30:00Z"
-            },
-            {
-                id: 2,
-                name: "database",
-                image: "postgres:15",
-                status: "running",
-                cpu: 32.1,
-                memory: 512,
-                memoryLimit: 1024,
-                ports: ["5432:5432"],
-                createdAt: "2024-01-10T08:15:00Z"
-            },
-            {
-                id: 3,
-                name: "redis-cache",
-                image: "redis:alpine",
-                status: "running",
-                cpu: 8.2,
-                memory: 128,
-                memoryLimit: 256,
-                ports: ["6379:6379"],
-                createdAt: "2024-01-12T14:20:00Z"
-            },
-            {
-                id: 4,
-                name: "api-backend",
-                image: "node:18-alpine",
-                status: "stopped",
-                cpu: 0,
-                memory: 0,
-                memoryLimit: 512,
-                ports: ["3000:3000"],
-                createdAt: "2024-01-08T09:45:00Z"
-            },
-            {
-                id: 5,
-                name: "monitoring",
-                image: "grafana/grafana:latest",
-                status: "paused",
-                cpu: 5.7,
-                memory: 198,
-                memoryLimit: 512,
-                ports: ["3001:3000"],
-                createdAt: "2024-01-14T16:10:00Z"
-            },
-            {
-                id: 6,
-                name: "log-aggregator",
-                image: "elasticsearch:8.11",
-                status: "running",
-                cpu: 45.3,
-                memory: 896,
-                memoryLimit: 2048,
-                ports: ["9200:9200", "9300:9300"],
-                createdAt: "2024-01-05T11:20:00Z"
-            }
-        ];
+        // État global des conteneurs
+        let containersData = [];
 
         // Initialisation
         document.addEventListener('DOMContentLoaded', function() {
             initializeTheme();
+            initializeWebSocket();
             loadContainers();
             setupEventListeners();
         });
+
+        // WebSocket pour les mises à jour en temps réel
+        function initializeWebSocket() {
+            try {
+                const socket = io();
+                
+                socket.on('connect', function() {
+                    console.log('Connecté au serveur WebSocket');
+                    updateScanStatus('idle', 'Prêt pour le scan');
+                });
+                
+                socket.on('disconnect', function() {
+                    console.log('Déconnecté du serveur WebSocket');
+                    updateScanStatus('idle', 'Connexion perdue');
+                });
+                
+                socket.on('network_update', function(data) {
+                    handleNetworkUpdate(data);
+                });
+                
+            } catch (error) {
+                console.error('Erreur WebSocket:', error);
+                updateScanStatus('idle', 'Mode hors ligne');
+            }
+        }
+
+        // Chargement des conteneurs depuis l'API
+        async function loadContainers() {
+            try {
+                const response = await fetch('/api/conteneurs');
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                containersData = data;
+                displayContainers(data);
+                updateStats(data);
+                
+            } catch (error) {
+                console.error('Erreur chargement conteneurs:', error);
+                showEmptyState('Impossible de charger les conteneurs: ' + error.message);
+            }
+        }
+
+        // Gestion des mises à jour réseau
+        function handleNetworkUpdate(data) {
+            if (data.devices) {
+                const containers = data.devices.filter(device => device.type === 'container');
+                containersData = containers;
+                displayContainers(containers);
+                updateStats(containers);
+            }
+        }
+
+        // Affichage des conteneurs
+        function displayContainers(containers) {
+            const containersGrid = document.getElementById('containers-grid');
+            
+            if (!containers || containers.length === 0) {
+                showEmptyState('Aucun conteneur détecté sur le réseau');
+                return;
+            }
+            
+            containersGrid.innerHTML = '';
+            
+            containers.forEach(container => {
+                const containerElement = createContainerCard(container);
+                containersGrid.appendChild(containerElement);
+            });
+        }
+
+        // Mise à jour des statistiques
+        function updateStats(containers) {
+            const total = containers.length;
+            const online = containers.filter(c => c.status === 'online').length;
+            const offline = total - online;
+            const avgCpu = total > 0 ? 
+                (containers.reduce((sum, c) => sum + (c.cpu_usage || 0), 0) / total).toFixed(1) : 0;
+
+            document.getElementById('total-containers').textContent = total;
+            document.getElementById('online-containers').textContent = online;
+            document.getElementById('offline-containers').textContent = offline;
+            document.getElementById('cpu-usage').textContent = avgCpu + '%';
+        }
+
+        // Création d'une carte conteneur
+        function createContainerCard(container) {
+            const card = document.createElement('div');
+            card.className = 'container-card fade-in';
+            
+            const statusClass = container.status === 'online' ? 'status-online' : 
+                              container.status === 'warning' ? 'status-warning' : 'status-offline';
+            
+            const ports = container.open_ports ? 
+                (typeof container.open_ports === 'string' ? JSON.parse(container.open_ports) : container.open_ports) : [];
+
+            card.innerHTML = `
+                <div class="container-header">
+                    <div class="container-name">
+                        <div class="container-status ${statusClass}"></div>
+                        ${container.name || container.hostname || container.ip}
+                    </div>
+                </div>
+                <div class="container-image">IP: ${container.ip}</div>
+                <div class="container-metrics">
+                    <div class="metric">
+                        <div class="metric-value">${container.cpu_usage || 0}%</div>
+                        <div class="metric-label">CPU</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">${container.memory_usage || 0}%</div>
+                        <div class="metric-label">Mémoire</div>
+                    </div>
+                </div>
+                ${ports.length > 0 ? `
+                <div class="container-ports">
+                    <div class="ports-label">Ports ouverts:</div>
+                    <div class="ports-list">
+                        ${ports.map(port => `<span class="port">${getPortName(port)}</span>`).join('')}
+                    </div>
+                </div>
+                ` : ''}
+                <div class="container-actions">
+                    <button class="btn btn-outline" onclick="showContainerDetails('${container.ip}')">
+                        <i class="fas fa-info-circle"></i> Détails
+                    </button>
+                    <button class="btn btn-primary" onclick="testContainer('${container.ip}')">
+                        <i class="fas fa-bolt"></i> Tester
+                    </button>
+                </div>
+            `;
+
+            return card;
+        }
+
+        // État vide
+        function showEmptyState(message) {
+            const containersGrid = document.getElementById('containers-grid');
+            containersGrid.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-box"></i>
+                    <h3>${message}</h3>
+                    <p>Utilisez le scanner réseau pour découvrir les conteneurs</p>
+                    <button class="btn btn-primary" onclick="scanNetwork()" style="margin-top: 1rem;">
+                        <i class="fas fa-search"></i> Scanner le réseau
+                    </button>
+                </div>
+            `;
+        }
+
+        // Scanner le réseau
+        async function scanNetwork() {
+            const button = document.getElementById('scan-network');
+            const originalText = button.innerHTML;
+            
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Scan...';
+            button.disabled = true;
+            
+            updateScanStatus('active', 'Scan en cours...');
+            
+            try {
+                const response = await fetch('/api/network/scan', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    updateScanStatus('idle', 'Scan terminé');
+                    // Recharger les données après un court délai
+                    setTimeout(() => {
+                        loadContainers();
+                    }, 3000);
+                } else {
+                    alert('Erreur lors du scan: ' + result.message);
+                    updateScanStatus('idle', 'Erreur de scan');
+                }
+                
+            } catch (error) {
+                console.error('Erreur scan:', error);
+                alert('Erreur de connexion lors du scan');
+                updateScanStatus('idle', 'Erreur de connexion');
+            } finally {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        }
+
+        // Mettre à jour le statut du scan
+        function updateScanStatus(status, text) {
+            const scanStatus = document.getElementById('scanStatus');
+            const scanStatusText = document.getElementById('scanStatusText');
+            
+            scanStatus.className = `scan-indicator scan-${status}`;
+            scanStatusText.textContent = text;
+            
+            if (status === 'active') {
+                scanStatus.classList.add('pulse');
+            } else {
+                scanStatus.classList.remove('pulse');
+            }
+        }
+
+        // Configuration des événements
+        function setupEventListeners() {
+            document.getElementById('refresh-containers').addEventListener('click', loadContainers);
+            document.getElementById('scan-network').addEventListener('click', scanNetwork);
+
+            // Filtres
+            document.getElementById('status-filter').addEventListener('change', filterContainers);
+            document.getElementById('sort-filter').addEventListener('change', sortContainers);
+            document.getElementById('search-filter').addEventListener('input', searchContainers);
+        }
+
+        // Fonctions utilitaires
+        function getPortName(port) {
+            const portNames = {
+                8080: 'HTTP-Alt', 3000: 'Node.js', 5000: 'Python', 
+                5432: 'PostgreSQL', 3306: 'MySQL', 27017: 'MongoDB',
+                9200: 'Elasticsearch', 5601: 'Kibana', 6379: 'Redis'
+            };
+            return portNames[port] || port;
+        }
+
+        function showContainerDetails(ip) {
+            const container = containersData.find(c => c.ip === ip);
+            if (container) {
+                const ports = container.open_ports ? 
+                    (typeof container.open_ports === 'string' ? JSON.parse(container.open_ports) : container.open_ports) : [];
+                
+                alert(`Détails du conteneur:\n\nIP: ${container.ip}\nNom: ${container.name || 'N/A'}\nStatut: ${container.status}\nPorts: ${ports.join(', ') || 'Aucun'}`);
+            }
+        }
+
+        async function testContainer(ip) {
+            try {
+                const response = await fetch(`/api/network/ping/${ip}`);
+                const result = await response.json();
+                alert(`Test de connexion ${ip}: ${result.online ? '✅ En ligne' : '❌ Hors ligne'}`);
+            } catch (error) {
+                alert('Erreur lors du test de connexion');
+            }
+        }
+
+        // Filtrage et recherche
+        function filterContainers() {
+            const statusFilter = document.getElementById('status-filter').value;
+            const containers = document.querySelectorAll('.container-card');
+            
+            containers.forEach(container => {
+                const status = container.querySelector('.container-status').classList.contains('status-online') ? 'online' : 'offline';
+                
+                if (statusFilter === 'all' || status === statusFilter) {
+                    container.style.display = 'block';
+                } else {
+                    container.style.display = 'none';
+                }
+            });
+        }
+
+        function sortContainers() {
+            // Implémentation du tri
+            console.log('Tri des conteneurs');
+        }
+
+        function searchContainers() {
+            const searchTerm = document.getElementById('search-filter').value.toLowerCase();
+            const containers = document.querySelectorAll('.container-card');
+            
+            containers.forEach(container => {
+                const name = container.querySelector('.container-name').textContent.toLowerCase();
+                const ip = container.querySelector('.container-image').textContent.toLowerCase();
+                
+                if (name.includes(searchTerm) || ip.includes(searchTerm)) {
+                    container.style.display = 'block';
+                } else {
+                    container.style.display = 'none';
+                }
+            });
+        }
 
         // Gestion du thème
         function initializeTheme() {
@@ -676,211 +926,6 @@
                     localStorage.setItem('theme', body.classList.contains('dark-theme') ? 'dark' : 'light');
                 });
             }
-        }
-
-        // Chargement des conteneurs
-        function loadContainers() {
-            const containersGrid = document.getElementById('containers-grid');
-            containersGrid.innerHTML = '';
-
-            // Mettre à jour les statistiques
-            updateStats(sampleContainers);
-
-            // Afficher les conteneurs
-            sampleContainers.forEach(container => {
-                const containerElement = createContainerCard(container);
-                containersGrid.appendChild(containerElement);
-            });
-        }
-
-        // Mise à jour des statistiques
-        function updateStats(containers) {
-            const total = containers.length;
-            const running = containers.filter(c => c.status === 'running').length;
-            const stopped = containers.filter(c => c.status === 'stopped').length;
-            const avgCpu = (containers.reduce((sum, c) => sum + c.cpu, 0) / total).toFixed(1);
-
-            document.getElementById('total-containers').textContent = total;
-            document.getElementById('running-containers').textContent = running;
-            document.getElementById('stopped-containers').textContent = stopped;
-            document.getElementById('cpu-usage').textContent = avgCpu + '%';
-        }
-
-        // Création d'une carte conteneur
-        function createContainerCard(container) {
-            const card = document.createElement('div');
-            card.className = 'container-card fade-in';
-            
-            const statusClass = `status-${container.status}`;
-            const statusText = getStatusText(container.status);
-            const memoryUsage = ((container.memory / container.memoryLimit) * 100).toFixed(1);
-
-            card.innerHTML = `
-                <div class="container-header">
-                    <div class="container-name">
-                        <div class="container-status ${statusClass}"></div>
-                        ${container.name}
-                    </div>
-                    <div class="container-actions">
-                        <button class="btn btn-outline" onclick="showContainerDetails(${container.id})">
-                            <i class="fas fa-info-circle"></i>
-                        </button>
-                        <button class="btn btn-primary" onclick="manageContainer(${container.id})">
-                            <i class="fas fa-cog"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="container-image">${container.image}</div>
-                <div class="container-metrics">
-                    <div class="metric">
-                        <div class="metric-value">${container.cpu}%</div>
-                        <div class="metric-label">CPU</div>
-                    </div>
-                    <div class="metric">
-                        <div class="metric-value">${memoryUsage}%</div>
-                        <div class="metric-label">Mémoire</div>
-                    </div>
-                </div>
-                <div class="container-ports">
-                    <div class="ports-label">Ports:</div>
-                    <div class="ports-list">
-                        ${container.ports.map(port => `<span class="port">${port}</span>`).join('')}
-                    </div>
-                </div>
-                <div class="container-actions">
-                    ${getActionButtons(container.status, container.id)}
-                </div>
-            `;
-
-            return card;
-        }
-
-        // Texte du statut
-        function getStatusText(status) {
-            const statusMap = {
-                'running': 'En cours',
-                'stopped': 'Arrêté',
-                'paused': 'En pause'
-            };
-            return statusMap[status] || status;
-        }
-
-        // Boutons d'action selon le statut
-        function getActionButtons(status, containerId) {
-            const baseButtons = `
-                <button class="btn btn-outline" onclick="showContainerLogs(${containerId})">
-                    <i class="fas fa-terminal"></i> Logs
-                </button>
-            `;
-
-            if (status === 'running') {
-                return baseButtons + `
-                    <button class="btn btn-warning" onclick="pauseContainer(${containerId})">
-                        <i class="fas fa-pause"></i> Pause
-                    </button>
-                    <button class="btn btn-danger" onclick="stopContainer(${containerId})">
-                        <i class="fas fa-stop"></i> Arrêter
-                    </button>
-                `;
-            } else if (status === 'stopped') {
-                return baseButtons + `
-                    <button class="btn btn-success" onclick="startContainer(${containerId})">
-                        <i class="fas fa-play"></i> Démarrer
-                    </button>
-                    <button class="btn btn-danger" onclick="removeContainer(${containerId})">
-                        <i class="fas fa-trash"></i> Supprimer
-                    </button>
-                `;
-            } else if (status === 'paused') {
-                return baseButtons + `
-                    <button class="btn btn-success" onclick="resumeContainer(${containerId})">
-                        <i class="fas fa-play"></i> Reprendre
-                    </button>
-                    <button class="btn btn-danger" onclick="stopContainer(${containerId})">
-                        <i class="fas fa-stop"></i> Arrêter
-                    </button>
-                `;
-            }
-
-            return baseButtons;
-        }
-
-        // Configuration des événements
-        function setupEventListeners() {
-            document.getElementById('refresh-containers').addEventListener('click', loadContainers);
-            document.getElementById('create-container').addEventListener('click', createNewContainer);
-            document.getElementById('start-all').addEventListener('click', startAllContainers);
-            document.getElementById('stop-all').addEventListener('click', stopAllContainers);
-
-            // Filtres
-            document.getElementById('status-filter').addEventListener('change', filterContainers);
-            document.getElementById('sort-filter').addEventListener('change', sortContainers);
-            document.getElementById('search-filter').addEventListener('input', searchContainers);
-        }
-
-        // Fonctions d'action (simulées)
-        function showContainerDetails(id) {
-            alert(`Détails du conteneur #${id}`);
-        }
-
-        function manageContainer(id) {
-            alert(`Gestion du conteneur #${id}`);
-        }
-
-        function showContainerLogs(id) {
-            alert(`Logs du conteneur #${id}`);
-        }
-
-        function startContainer(id) {
-            alert(`Démarrage du conteneur #${id}`);
-        }
-
-        function stopContainer(id) {
-            alert(`Arrêt du conteneur #${id}`);
-        }
-
-        function pauseContainer(id) {
-            alert(`Pause du conteneur #${id}`);
-        }
-
-        function resumeContainer(id) {
-            alert(`Reprise du conteneur #${id}`);
-        }
-
-        function removeContainer(id) {
-            if (confirm('Êtes-vous sûr de vouloir supprimer ce conteneur ?')) {
-                alert(`Suppression du conteneur #${id}`);
-            }
-        }
-
-        function createNewContainer() {
-            alert('Création d\'un nouveau conteneur');
-        }
-
-        function startAllContainers() {
-            alert('Démarrage de tous les conteneurs');
-        }
-
-        function stopAllContainers() {
-            if (confirm('Êtes-vous sûr de vouloir arrêter tous les conteneurs ?')) {
-                alert('Arrêt de tous les conteneurs');
-            }
-        }
-
-        // Filtrage et recherche
-        function filterContainers() {
-            // Implémentation du filtrage
-            console.log('Filtrage des conteneurs');
-        }
-
-        function sortContainers() {
-            // Implémentation du tri
-            console.log('Tri des conteneurs');
-        }
-
-        function searchContainers() {
-            // Implémentation de la recherche
-            console.log('Recherche de conteneurs');
         }
     </script>
 </body>
