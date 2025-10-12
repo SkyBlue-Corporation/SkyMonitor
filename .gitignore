@@ -1,0 +1,80 @@
+# =========================
+# System / OS files
+# =========================
+*~
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+*.bak
+*.old
+*.tmp
+*.log
+*.out
+*.pid
+*.sock
+
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+build/
+dist/
+env/
+venv/
+.env
+.env.local
+.env.*.local
+
+# =========================
+# Bash / Shell
+# =========================
+*.sh~
+*.swp
+*.bak
+
+# =========================
+# Web / Frontend
+# =========================
+node_modules/
+npm-debug.log
+yarn-error.log
+*.cache
+*.tmp
+*.log
+
+# =========================
+# Docker
+# =========================
+docker-compose.override.yml
+*.env
+**/logs/
+*.pid
+*.swp
+*.tmp
+
+# =========================
+# Linux / Servers
+# =========================
+*.conf.bak
+*.service.bak
+*.socket.bak
+
+# =========================
+# IDE / Editors
+# =========================
+.vscode/
+.idea/
+*.iml
+*.sublime-project
+*.sublime-workspace
+
+# =========================
+# Git
+# =========================
+#.gitignore
