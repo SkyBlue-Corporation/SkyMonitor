@@ -92,3 +92,11 @@ python scripts/run.py
 ```
 
 **Le dashboard sera accessible à l'adresse : http://localhost:5000**
+
+## 📸 Captures d'écran
+
+### Dashboard principal
+![Dashboard SkyMonitor](app/static/images/Capture d’écran_dasboard.png)
+
+### Scan réseau en cours
+![Parametre](app/static/images/parametre.png)
