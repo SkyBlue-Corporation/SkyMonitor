@@ -23,3 +23,22 @@ Ce projet vise à fournir un **tableau de bord léger** pour visualiser l’éta
 
 ## 🧩 Structure du projet
 
+SkyMonitor/
+│
+├── app/
+│ ├── init.py # Initialisation de Flask
+│ ├── routes.py # Routes principales du tableau de bord
+│ ├── utils.py # Fonctions de scan et de collecte système
+│ └── templates/
+│ └── index.html # Interface web principale
+│
+├── scripts/
+│ └── network_scan.py # Scan du réseau et envoi des données
+│
+├── static/
+│ └── style.css # Feuille de style du dashboard
+│
+├── run.py # Point d'entrée de l'application
+├── requirements.txt # Dépendances Python
+└── README.md # Documentation
+
