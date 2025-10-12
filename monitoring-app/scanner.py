@@ -84,7 +84,7 @@ class NetworkScanner:
         elif any(port in open_ports for port in [80, 443, 21, 22, 25, 53, 3306, 5432]):
             return "server"
         # Conteneurs - ports d'applications
-        elif any(port in open_ports for port in [8080, 3000, 5000, 9000]):
+        elif any(port in open_ports for port in [8080, 3000, 5000, 8000, 9000, 8081, 8082, 8083, 5432, 3306, 27017, 9200, 5601, 6379]):
             return "container"
         else:
             return "network_device"
