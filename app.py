@@ -94,6 +94,7 @@ def collect_system_metrics():
             print(f"Erreur collecte métriques: {e}")
             time.sleep(10)
 
+# Avoir l'autorisation pour pouvoir modifier 
 def network_scan():
     """Scanner le réseau périodiquement"""
     nm = nmap.PortScanner()
