@@ -9,4 +9,4 @@ As members of **Sky Blue Corporation**, we commit to maintaining a professional,
 
 ## Enforcement
 Violations of this code will be handled by the Sky Blue Corporation leadership team at:
-contact@skyblue-corporation.com
+codecld@proton.me
