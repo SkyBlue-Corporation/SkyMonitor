@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  influxdb:
+    image: influxdb:2.7
+    container_name: skywatch-influxdb
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=skywatch2024
+      - DOCKER_INFLUXDB_INIT_ORG=skywatch
+      - DOCKER_INFLUXDB_INIT_BUCKET=network_monitoring
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=your-admin-token-here
+    ports:
+      - "8086:8086"
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+      - ./influxdb.conf:/etc/influxdb2/config.yml
+    networks:
+      - monitoring-network
+
+  grafana:
+    image: grafana/grafana:10.0.0
+    container_name: skywatch-grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=skywatch2024
+      - GF_INSTALL_PLUGINS=grafana-clock-panel
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana.ini:/etc/grafana/grafana.ini
+    depends_on:
+      - influxdb
+    networks:
+      - monitoring-network
+
+  monitoring-app:
+    build: 
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: skywatch-monitoring
+    environment:
+      - INFLUXDB_URL=http://influxdb:8086
+      - INFLUXDB_TOKEN=your-admin-token-here
+      - FLASK_ENV=production
+    ports:
+      - "5000:5000"
+    volumes:
+      - ../app:/app
+    depends_on:
+      - influxdb
+    networks:
+      - monitoring-network
+    restart: unless-stopped
+
+volumes:
+  influxdb_data:
+  grafana_data:
+
+networks:
+  monitoring-network:
+    driver: bridge
