@@ -7,7 +7,7 @@ Security updates are maintained for the latest release of **SkyMonitor**.
 If you discover a vulnerability, please **do not disclose it publicly**.
 
 Contact:
-- security@skyblue-corporation.com
+- codecld@proton.me
 - IT Security Lead: Claude Code
 
 ## Response Process
