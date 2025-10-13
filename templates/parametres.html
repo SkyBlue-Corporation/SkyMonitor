@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-content">
+    <div class="page-header">
+        <h1>⚙️ Paramètres du Système</h1>
+        <p>Configuration et préférences</p>
+    </div>
+    
+    <div class="settings-grid">
+        <div class="settings-sidebar">
+            <div class="settings-nav">
+                <a href="#" class="nav-item active">Général</a>
+                <a href="#" class="nav-item">Notifications</a>
+                <a href="#" class="nav-item">Sécurité</a>
+                <a href="#" class="nav-item">Réseau</a>
+            </div>
+        </div>
+        
+        <div class="settings-content">
+            <div class="setting-group">
+                <label>Intervalle de scan</label>
+                <select>
+                    <option>30 secondes</option>
+                    <option>1 minute</option>
+                    <option>5 minutes</option>
+                </select>
+            </div>
+            
+            <div class="setting-group">
+                <label>
+                    <input type="checkbox" checked>
+                    Notifications par email
+                </label>
+            </div>
+            
+            <div class="actions">
+                <button class="btn btn-primary">Sauvegarder</button>
+                <button class="btn btn-outline">Annuler</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

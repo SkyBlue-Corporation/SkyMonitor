@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-content">
+    <div class="page-header">
+        <h1>💻 Postes de Travail</h1>
+        <p>Gestion des postes utilisateurs</p>
+    </div>
+    
+    <div class="filters">
+        <select class="filter-select">
+            <option>Tous les statuts</option>
+            <option>En ligne</option>
+            <option>Hors ligne</option>
+        </select>
+        <input type="text" class="search-input" placeholder="Rechercher...">
+    </div>
+    
+    <div class="workstations-grid">
+        <div id="postes-container">
+            <p>Chargement des postes...</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

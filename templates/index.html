@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-content">
+    <div class="page-header">
+        <h1>🚀 Tableau de Bord Principal</h1>
+        <p>Surveillance en temps réel de votre infrastructure</p>
+    </div>
+    
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon cpu">
+                <i class="fas fa-microchip"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-value" id="cpu-value">0%</div>
+                <div class="stat-label">Utilisation CPU</div>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon memory">
+                <i class="fas fa-memory"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-value" id="memory-value">0%</div>
+                <div class="stat-label">Utilisation Mémoire</div>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon disk">
+                <i class="fas fa-hdd"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-value" id="disk-value">0%</div>
+                <div class="stat-label">Utilisation Disque</div>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon network">
+                <i class="fas fa-network-wired"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-value" id="network-devices">0</div>
+                <div class="stat-label">Appareils Réseau</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="content-grid">
+        <div class="card">
+            <div class="card-header">
+                <h3>Appareils Réseau Détectés</h3>
+                <button class="btn btn-primary" onclick="scanNetwork()">
+                    <i class="fas fa-search"></i> Scanner
+                </button>
+            </div>
+            <div class="card-content">
+                <div id="devices-container">
+                    <p>Chargement des appareils...</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h3>Alertes Récentes</h3>
+            </div>
+            <div class="card-content">
+                <div class="alert-list">
+                    <div class="alert-item info">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Système opérationnel</span>
+                    </div>
+                    <div class="alert-item warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>Charge CPU élevée sur DB-Server</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function scanNetwork() {
+    fetch('/api/scan/network', { 
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ network: '192.168.1.0/24' })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`Scan terminé: ${data.devices_found} appareils trouvés`);
+        } else {
+            alert('Erreur lors du scan: ' + data.error);
+        }
+    });
+}
+</script>
+{% endblock %}

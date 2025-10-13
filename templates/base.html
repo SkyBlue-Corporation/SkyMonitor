@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkyMonitor - Système de Monitoring</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <i class="fas fa-chart-network"></i>
+            <span>SkyMonitor</span>
+        </div>
+        <div class="nav-links">
+            <a href="/" class="nav-link" data-route="/">
+                <i class="fas fa-home"></i>
+                <span>Accueil</span>
+            </a>
+            <a href="/dashboard" class="nav-link" data-route="/dashboard">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="/serveurs" class="nav-link" data-route="/serveurs">
+                <i class="fas fa-server"></i>
+                <span>Serveurs</span>
+            </a>
+            <a href="/postes" class="nav-link" data-route="/postes">
+                <i class="fas fa-desktop"></i>
+                <span>Postes</span>
+            </a>
+            <a href="/conteneurs" class="nav-link" data-route="/conteneurs">
+                <i class="fas fa-box"></i>
+                <span>Conteneurs</span>
+            </a>
+            <a href="/metriques" class="nav-link" data-route="/metriques">
+                <i class="fas fa-chart-line"></i>
+                <span>Métriques</span>
+            </a>
+            <a href="/parametres" class="nav-link" data-route="/parametres">
+                <i class="fas fa-cog"></i>
+                <span>Paramètres</span>
+            </a>
+        </div>
+        <div class="nav-user">
+            <i class="fas fa-user-circle"></i>
+            <span>Administrateur</span>
+        </div>
+    </nav>
+
+    <!-- Contenu principal -->
+    <main id="main-content">
+        <!-- Le contenu sera chargé dynamiquement par le router -->
+    </main>
+
+    <!-- Scripts -->
+    <script src="/static/js/router.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

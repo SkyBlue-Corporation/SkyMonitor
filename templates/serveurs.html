@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-content">
+    <div class="page-header">
+        <h1>🖥️ Gestion des Serveurs</h1>
+        <p>Surveillance et gestion de vos serveurs</p>
+    </div>
+    
+    <div class="actions-bar">
+        <button class="btn btn-outline">
+            <i class="fas fa-sync-alt"></i> Actualiser
+        </button>
+        <button class="btn btn-primary">
+            <i class="fas fa-plus"></i> Ajouter un serveur
+        </button>
+    </div>
+    
+    <div class="servers-list">
+        <div id="serveurs-container">
+            <p>Chargement des serveurs...</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
