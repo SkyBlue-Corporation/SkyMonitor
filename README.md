@@ -59,6 +59,7 @@ chmod +x deploy.sh
 
 ## Structure avant l'Execution du Script ./deploy.sh
 
+```bash
 monitoring-app/
 ├── 📄 app.py                          # Application Flask principale
 ├── 📄 requirements.txt                # Dépendances Python
