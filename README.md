@@ -44,11 +44,18 @@ Développée avec une architecture conteneurisée basée sur **Flask**, **Influx
 
 ### 1️⃣ Cloner le dépôt
 ```bash
-git clone https://github.com/Claude7776/SkyMonitor.git
+git clone https://github.com/SkyBlue-Corporation/SkyMonitor.git
+```
+```bash
 cd SkyMonitor
+```
+```bash
 chmod +x deploy.sh
+```
+```bash
 ./deploys.sh
 ```
+------------------------------------------------------
 
 ## Structure avant l'Execution du Script ./deploy.sh
 
