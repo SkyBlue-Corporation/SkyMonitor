@@ -1,7 +1,8 @@
-Flask==2.3.3
-Flask-SocketIO==5.3.6
+Flask==2.3.2
+Flask-SocketIO==6.4.3
 influxdb-client==1.36.1
 psutil==5.9.5
 python-nmap==0.7.1
 eventlet==0.33.3
-gunicorn==21.2.0
+gunicorn==23.0.0
+netifaces==0.11.0
