@@ -6,7 +6,7 @@ Application complète de monitoring avec **Flask**, **InfluxDB** et **Grafana**.
 
 ## 🛠️ Badges
 
-![Docker Build](https://img.shields.io/docker/build/tondockerhub/sky-monitor?style=flat-square&logo=docker)  
+![Docker Build](https://img.shields.io/docker/build/tondockerhub/sky-monitor?style=flat-square&logo=docker)
 ![Python Tests](https://img.shields.io/github/workflow/status/tongithub/sky-monitor/Python%20Tests?style=flat-square&logo=github)  
 ![Grype Scan](https://img.shields.io/badge/Grype-Secure-green?style=flat-square&logo=docker)
 
