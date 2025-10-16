@@ -6,6 +6,8 @@ RUN apt-get update && apt-get install -y \
     nmap \
     iputils-ping \
     net-tools \
+    && apt install -y --no-install-recommends libexpat1 \
+    && apt-get install -y --only-upgrade libexpat1 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .

@@ -1,0 +1,106 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "description": "Dashboard complet Sky Monitor - CPU, RAM, Réseau, Docker & Uptime",
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": null,
+  "iteration": 1728880000000,
+  "panels": [
+    {
+      "datasource": "InfluxDB",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        }
+      },
+      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 0},
+      "id": 1,
+      "options": {"showThresholdLabels": false},
+      "targets": [
+        {
+          "query": "from(bucket: \"monitoring-data\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"cpu\" and r._field == \"usage_system\")",
+          "refId": "A"
+        }
+      ],
+      "title": "CPU Usage (%)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "InfluxDB",
+      "fieldConfig": {"defaults": {"unit": "percent"}},
+      "gridPos": {"h": 8, "w": 8, "x": 8, "y": 0},
+      "id": 2,
+      "targets": [
+        {
+          "query": "from(bucket: \"monitoring-data\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"mem\" and r._field == \"used_percent\")",
+          "refId": "A"
+        }
+      ],
+      "title": "RAM Usage (%)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "InfluxDB",
+      "fieldConfig": {"defaults": {"unit": "bytes"}},
+      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 0},
+      "id": 3,
+      "targets": [
+        {
+          "query": "from(bucket: \"monitoring-data\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"disk\" and r._field == \"used\")",
+          "refId": "A"
+        }
+      ],
+      "title": "Disk Usage",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "InfluxDB",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "id": 4,
+      "targets": [
+        {
+          "query": "from(bucket: \"monitoring-data\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"net\" and (r._field == \"bytes_sent\" or r._field == \"bytes_recv\"))",
+          "refId": "A"
+        }
+      ],
+      "title": "Network Traffic",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "InfluxDB",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+      "id": 5,
+      "targets": [
+        {
+          "query": "from(bucket: \"monitoring-data\") |> range(start: -15m) |> filter(fn: (r) => r._measurement == \"uptime\" and r._field == \"value\")",
+          "refId": "A"
+        }
+      ],
+      "title": "System Uptime",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "InfluxDB",
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16},
+      "id": 6,
+      "targets": [
+        {
+          "query": "from(bucket: \"monitoring-data\") |> range(start: -10m) |> filter(fn: (r) => r._measurement == \"docker_container_cpu\" and r._field == \"usage_percent\")",
+          "refId": "A"
+        }
+      ],
+      "title": "Docker Containers - CPU Usage",
+      "type": "timeseries"
+    }
+  ],
+  "schemaVersion": 37,
+  "style": "dark",
+  "tags": ["sky-monitor", "influxdb", "docker"],
+  "time": {"from": "now-15m", "to": "now"},
+  "timezone": "browser",
+  "title": "Sky Monitor Dashboard",
+  "version": 1
+}

@@ -100,7 +100,7 @@ def network_scan():
     
     while True:
         try:
-            network = "192.168.1.0/24"
+            network = "10.236.155.88/24"  # Remplacez par votre plage réseau
             scan_result = nm.scan(hosts=network, arguments='-sn')
             
             devices = []
@@ -295,7 +295,7 @@ def get_metrics_history():
 def scan_network_now():
     try:
         nm = nmap.PortScanner()
-        network = request.json.get('network', '192.168.1.0/24')
+        network = request.json.get('network', '10.236.155.0/24')
         
         scan_result = nm.scan(hosts=network, arguments='-sn -T4')
         

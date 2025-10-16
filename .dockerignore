@@ -1,0 +1,28 @@
+# Ignorer les fichiers temporaires
+__pycache__/
+*.pyc
+*.pyo
+
+# Ignorer les logs
+*.log
+
+# Ignorer les fichiers de configuration perso
+.env
+.vscode/
+.idea/
+
+# Ignorer les fichiers du système
+.DS_Store
+
+# Ignorer les dossiers de dépendances locales
+venv/
+.env/
+node_modules/
+
+# Ignorer les fichiers Git
+.git
+.gitignore
+
+# Ignorer les fichiers de build Docker
+Dockerfile
+docker-compose.yml
