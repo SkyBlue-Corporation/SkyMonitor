@@ -12,7 +12,7 @@ venv:
 install: venv
 	@echo "Activating venv and installing dev requirements..."
 	@$(PIP) install --upgrade pip
-	@$(PIP) install -r requirements-dev.txt
+	@$(PIP) install -r requirements.txt
 
 test: install
 	@echo "Running tests..."
