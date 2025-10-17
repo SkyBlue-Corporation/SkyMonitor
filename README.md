@@ -35,6 +35,7 @@ docker-compose down
 
 # Voir les logs
 docker-compose logs -f
+```
 
 ## 🏗 Architecture du projet
 
