@@ -5,3 +5,5 @@ psutil==5.9.5
 python-nmap==0.7.1
 eventlet==0.33.3
 gunicorn==22.0.0
+pytest>=7.0
+pytest-cov
