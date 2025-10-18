@@ -1,175 +1,142 @@
-from flask import Flask, render_template, jsonify, request, send_from_directory
+# ========================= app.py =========================
+import os
+import time
+from datetime import datetime
+from flask import Flask, jsonify, request, render_template, send_from_directory
 from flask_socketio import SocketIO
-import influxdb_client
-from influxdb_client.client.write_api import SYNCHRONOUS
 import psutil
 import nmap
-import threading
-import time
-import json
-from datetime import datetime
-import os
+import docker
 
+# ------------------- Flask + SocketIO -------------------
 app = Flask(__name__, static_folder='static')
-app.config['SECRET_KEY'] = 'your-secret-key-here'
-socketio = SocketIO(app, cors_allowed_origins="*")
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'change-this-key')
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
-# Configuration InfluxDB
-INFLUXDB_URL = "http://influxdb:8086"
-INFLUXDB_TOKEN = "monitoring-token"
-INFLUXDB_ORG = "monitoring-org"
-INFLUXDB_BUCKET = "monitoring-data"
+# ------------------- InfluxDB Client -------------------
+try:
+    import influxdb_client
+    from influxdb_client.client.write_api import SYNCHRONOUS
+except ImportError:
+    influxdb_client = None
+    SYNCHRONOUS = None
 
-client = influxdb_client.InfluxDBClient(
-    url=INFLUXDB_URL,
-    token=INFLUXDB_TOKEN,
-    org=INFLUXDB_ORG
-)
+INFLUXDB_URL = os.environ.get('INFLUXDB_URL', 'http://localhost:8086')
+INFLUXDB_TOKEN = os.environ.get('INFLUXDB_TOKEN', 'monitoring-token')
+INFLUXDB_ORG = os.environ.get('INFLUXDB_ORG', 'monitoring-org')
+INFLUXDB_BUCKET = os.environ.get('INFLUXDB_BUCKET', 'monitoring-data')
 
-write_api = client.write_api(write_options=SYNCHRONOUS)
-query_api = client.query_api()
+if influxdb_client:
+    influx_client = influxdb_client.InfluxDBClient(
+        url=INFLUXDB_URL,
+        token=INFLUXDB_TOKEN,
+        org=INFLUXDB_ORG
+    )
+    write_api = influx_client.write_api(write_options=SYNCHRONOUS)
+else:
+    influx_client = None
+    write_api = None
 
-def write_to_influx(measurement, fields, tags=None):
-    """Écrire des données dans InfluxDB"""
+# ------------------- Docker Client -------------------
+docker_client = docker.from_env()
+# ------------------- Nmap Client -------------------
+nm = nmap.PortScanner()
+
+# ------------------- Fonctions testables -------------------
+def write_metrics(measurement, fields, tags=None):
+    """Écrire un point dans InfluxDB"""
+    if not write_api:
+        print("InfluxDB non disponible, point ignoré")
+        return
     point = influxdb_client.Point(measurement)
-    
     if tags:
-        for key, value in tags.items():
-            point = point.tag(key, value)
-    
-    for key, value in fields.items():
-        point = point.field(key, value)
-    
+        for k, v in tags.items():
+            point = point.tag(k, v)
+    for k, v in fields.items():
+        point = point.field(k, v)
     try:
         write_api.write(bucket=INFLUXDB_BUCKET, record=point)
-        return True
     except Exception as e:
         print(f"Erreur InfluxDB: {e}")
-        return False
+
+def network_scan(network="10.236.155.0/24"):
+    """Scan réseau et retourne liste de devices"""
+    try:
+        nm.scan(hosts=network, arguments='-sn -T4')
+        devices = []
+        for host in nm.all_hosts():
+            status = 1 if nm[host].state() == 'up' else 0
+            hostname = nm[host].hostname() or 'unknown'
+            devices.append({
+                'ip': host,
+                'hostname': hostname,
+                'status': status,
+                'last_seen': datetime.now().isoformat()
+            })
+        return devices
+    except Exception as e:
+        print(f"Erreur scan réseau: {e}")
+        return []
 
 def collect_system_metrics():
-    """Collecter les métriques système"""
+    """Collecte métriques CPU/Mémoire/Disque/Network et émet via SocketIO"""
     while True:
         try:
-            # CPU
             cpu_percent = psutil.cpu_percent(interval=1)
-            
-            # Mémoire
             memory = psutil.virtual_memory()
-            memory_percent = memory.percent
-            memory_used_gb = memory.used / (1024**3)
-            
-            # Disque
             disk = psutil.disk_usage('/')
-            disk_percent = disk.percent
-            disk_used_gb = disk.used / (1024**3)
-            
-            # Réseau
-            network = psutil.net_io_counters()
-            network_sent_mb = network.bytes_sent / (1024**2)
-            network_recv_mb = network.bytes_recv / (1024**2)
-            
-            # Écrire dans InfluxDB
-            write_to_influx("system_metrics", {
+            net = psutil.net_io_counters()
+
+            fields = {
                 "cpu_percent": cpu_percent,
-                "memory_percent": memory_percent,
-                "memory_used_gb": memory_used_gb,
-                "disk_percent": disk_percent,
-                "disk_used_gb": disk_used_gb,
-                "network_sent_mb": network_sent_mb,
-                "network_recv_mb": network_recv_mb
-            }, tags={"host": "monitoring-server"})
-            
-            # Envoyer via WebSocket
-            socketio.emit('system_metrics', {
-                'cpu_percent': cpu_percent,
-                'memory_percent': memory_percent,
-                'disk_percent': disk_percent,
-                'timestamp': datetime.now().isoformat()
-            })
-            
+                "memory_percent": memory.percent,
+                "memory_used_gb": memory.used / (1024**3),
+                "disk_percent": disk.percent,
+                "disk_used_gb": disk.used / (1024**3),
+                "network_sent_mb": net.bytes_sent / (1024**2),
+                "network_recv_mb": net.bytes_recv / (1024**2)
+            }
+
+            tags = {"host": "monitoring-server"}
+
+            write_metrics("system_metrics", fields, tags)
+            socketio.emit('system_metrics', {**fields, 'timestamp': datetime.now().isoformat()})
             time.sleep(5)
-            
         except Exception as e:
-            print(f"Erreur collecte métriques: {e}")
+            print(f"Erreur collecte système: {e}")
             time.sleep(10)
 
-def network_scan():
-    """Scanner le réseau périodiquement"""
-    nm = nmap.PortScanner()
-    
+def collect_docker_metrics():
+    """Collecte métriques Docker et émet via SocketIO"""
     while True:
         try:
-            network = "10.236.155.88/24"  # Remplacez par votre plage réseau
-            scan_result = nm.scan(hosts=network, arguments='-sn')
-            
-            devices = []
-            for host in nm.all_hosts():
-                device_info = {
-                    'ip': host,
-                    'hostname': nm[host].hostname(),
-                    'status': 'up' if nm[host].state() == 'up' else 'down',
-                    'last_seen': datetime.now().isoformat()
-                }
-                devices.append(device_info)
-                
-                write_to_influx("network_devices", {
-                    "status": 1 if device_info['status'] == 'up' else 0
-                }, tags={
-                    "ip": host,
-                    "hostname": device_info['hostname'] or 'unknown'
-                })
-            
-            socketio.emit('network_scan', {
-                'devices': devices,
-                'total_count': len(devices),
-                'online_count': len([d for d in devices if d['status'] == 'up']),
-                'scan_time': datetime.now().isoformat()
-            })
-            
-            time.sleep(60)
-            
+            containers = docker_client.containers.list()
+            for c in containers:
+                stats = c.stats(stream=False)
+                cpu_delta = stats['cpu_stats']['cpu_usage']['total_usage'] - stats['precpu_stats']['cpu_usage']['total_usage']
+                system_delta = stats['cpu_stats']['system_cpu_usage'] - stats['precpu_stats']['system_cpu_usage']
+                cpu_percent = (cpu_delta / system_delta) * len(stats['cpu_stats']['cpu_usage']['percpu_usage']) * 100 if system_delta > 0 else 0
+                mem_usage = stats['memory_stats']['usage'] / (1024**2)
+                mem_limit = stats['memory_stats']['limit'] / (1024**2)
+                mem_percent = (mem_usage / mem_limit) * 100 if mem_limit > 0 else 0
+
+                fields = {"cpu_percent": cpu_percent, "memory_usage_mb": mem_usage, "memory_percent": mem_percent}
+                tags = {"container_name": c.name, "container_id": c.id[:12]}
+
+                write_metrics("docker_metrics", fields, tags)
+                socketio.emit('docker_metrics', {**fields, 'container_name': c.name, 'timestamp': datetime.now().isoformat()})
+            time.sleep(10)
         except Exception as e:
-            print(f"Erreur scan réseau: {e}")
-            time.sleep(120)
+            print(f"Erreur collecte Docker: {e}")
+            time.sleep(15)
 
-# Routes SPA
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-@app.route('/dashboard')
-def dashboard():
-    return render_template('dashboard.html')
-
-@app.route('/serveurs')
-def serveurs():
-    return render_template('serveurs.html')
-
-@app.route('/postes')
-def postes():
-    return render_template('postes.html')
-
-@app.route('/conteneurs')
-def conteneurs():
-    return render_template('conteneurs.html')
-
-@app.route('/metriques')
-def metriques():
-    return render_template('metriques.html')
-
-@app.route('/parametres')
-def parametres():
-    return render_template('parametres.html')
-
-# API Routes
+# ------------------- Routes API -------------------
 @app.route('/api/system/stats')
 def get_system_stats():
     try:
-        cpu_percent = psutil.cpu_percent()
+        cpu_percent = psutil.cpu_percent(interval=1)
         memory = psutil.virtual_memory()
         disk = psutil.disk_usage('/')
-        
         return jsonify({
             'cpu_percent': cpu_percent,
             'memory_percent': memory.percent,
@@ -183,188 +150,23 @@ def get_system_stats():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/network/stats')
-def get_network_stats():
-    try:
-        return jsonify({
-            'total_devices': 15,
-            'online_devices': 12,
-            'last_scan': datetime.now().isoformat()
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/serveurs')
-def get_servers():
-    try:
-        servers = [
-            {
-                'id': 1,
-                'name': 'Serveur Web Principal',
-                'ip_address': '192.168.1.10',
-                'status': 'online',
-                'cpu_usage': 45,
-                'memory_usage': 60,
-                'storage_usage': 75,
-                'last_seen': datetime.now().isoformat()
-            },
-            {
-                'id': 2,
-                'name': 'Base de Données',
-                'ip_address': '192.168.1.11',
-                'status': 'online',
-                'cpu_usage': 25,
-                'memory_usage': 80,
-                'storage_usage': 45,
-                'last_seen': datetime.now().isoformat()
-            }
-        ]
-        return jsonify(servers)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/postes')
-def get_workstations():
-    try:
-        workstations = [
-            {
-                'id': 1,
-                'name': 'PC-Admin-01',
-                'ip_address': '192.168.1.50',
-                'status': 'online',
-                'cpu_usage': 15,
-                'memory_usage': 40,
-                'last_seen': datetime.now().isoformat()
-            },
-            {
-                'id': 2,
-                'name': 'PC-User-02',
-                'ip_address': '192.168.1.51',
-                'status': 'offline',
-                'cpu_usage': 0,
-                'memory_usage': 0,
-                'last_seen': datetime.now().isoformat()
-            }
-        ]
-        return jsonify(workstations)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/conteneurs')
-def get_containers():
-    try:
-        containers = [
-            {
-                'id': 1,
-                'name': 'web-app',
-                'image': 'nginx:latest',
-                'status': 'running',
-                'cpu_usage': 10,
-                'memory_usage': 25,
-                'ports': [80, 443],
-                'ip_address': '172.17.0.2'
-            }
-        ]
-        return jsonify(containers)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/metrics/history')
-def get_metrics_history():
-    try:
-        range_param = request.args.get('range', '1h')
-        
-        import random
-        from datetime import datetime, timedelta
-        
-        points = 60
-        cpu_data = [random.uniform(10, 80) for _ in range(points)]
-        memory_data = [random.uniform(30, 90) for _ in range(points)]
-        storage_data = [random.uniform(40, 85) for _ in range(points)]
-        
-        return jsonify({
-            'cpu': cpu_data,
-            'memory': memory_data,
-            'storage': storage_data
-        })
-    
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
 @app.route('/api/scan/network', methods=['POST'])
 def scan_network_now():
     try:
-        nm = nmap.PortScanner()
         network = request.json.get('network', '10.236.155.0/24')
-        
-        scan_result = nm.scan(hosts=network, arguments='-sn -T4')
-        
-        devices = []
-        for host in nm.all_hosts():
-            device_info = {
-                'ip': host,
-                'hostname': nm[host].hostname(),
-                'status': 'online',
-                'mac_address': nm[host].addresses.get('mac', 'Unknown'),
-                'last_seen': datetime.now().isoformat()
-            }
-            devices.append(device_info)
-            
-            write_to_influx("network_scan", {
-                "scan_status": 1
-            }, tags={
-                "ip": host,
-                "hostname": device_info['hostname'] or 'unknown'
-            })
-        
-        socketio.emit('network_scan_complete', {
-            'devices': devices,
-            'scan_time': datetime.now().isoformat()
-        })
-        
-        return jsonify({
-            'success': True,
-            'devices_found': len(devices),
-            'scan_time': scan_result['nmap']['scanstats']['elapsed']
-        })
-    
+        devices = network_scan(network)
+        socketio.emit('network_scan_complete', {'devices': devices, 'scan_time': datetime.now().isoformat()})
+        return jsonify({'success': True, 'devices_found': len(devices)})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@app.route('/api/network/devices')
-def get_network_devices():
-    try:
-        devices = [
-            {
-                'ip': '192.168.1.1',
-                'hostname': 'router.local',
-                'status': 'online',
-                'last_seen': datetime.now().isoformat()
-            },
-            {
-                'ip': '192.168.1.10',
-                'hostname': 'server1.local',
-                'status': 'online',
-                'last_seen': datetime.now().isoformat()
-            }
-        ]
-        return jsonify(devices)
-    
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+# ------------------- Routes SPA -------------------
+@app.route('/')
+def index(): return render_template('index.html')
+@app.route('/dashboard')
+def dashboard(): return render_template('dashboard.html')
 
-# Static files
-@app.route('/static/<path:filename>')
-def static_files(filename):
-    return send_from_directory(app.static_folder, filename)
-
-# SPA fallback
-@app.errorhandler(404)
-def not_found(e):
-    if request.path.startswith('/api/'):
-        return jsonify({'error': 'Endpoint API non trouvé'}), 404
-    return render_template('index.html'), 200
-
+# ------------------- WebSocket -------------------
 @socketio.on('connect')
 def handle_connect():
     print('Client connecté')
@@ -374,11 +176,23 @@ def handle_connect():
 def handle_disconnect():
     print('Client déconnecté')
 
+# ------------------- SPA fallback & static -------------------
+@app.route('/static/<path:filename>')
+def static_files(filename): return send_from_directory(app.static_folder, filename)
+
+@app.errorhandler(404)
+def not_found(e):
+    if request.path.startswith('/api/'):
+        return jsonify({'error': 'Endpoint API non trouvé'}), 404
+    return render_template('index.html'), 200
+
+# ------------------- Lancer le serveur -------------------
 if __name__ == '__main__':
-    metrics_thread = threading.Thread(target=collect_system_metrics, daemon=True)
-    network_thread = threading.Thread(target=network_scan, daemon=True)
-    
-    metrics_thread.start()
-    network_thread.start()
-    
+    # Lancer les tâches en background
+    socketio.start_background_task(collect_system_metrics)
+    socketio.start_background_task(collect_docker_metrics)
+    socketio.start_background_task(lambda: network_scan())  # scan en boucle à l'intérieur de la fonction si nécessaire
     socketio.run(app, host='0.0.0.0', port=5000, debug=True)
+
+# ------------------- Expose pour tests -------------------
+__all__ = ['app', 'socketio', 'write_api', 'write_metrics', 'docker_client', 'nm', 'network_scan', 'collect_system_metrics', 'collect_docker_metrics']
