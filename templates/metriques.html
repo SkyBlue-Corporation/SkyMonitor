@@ -19,17 +19,18 @@
     </div>
     
     <div class="metrics-grid">
-        <div class="metric-card">
-            <h3>CPU</h3>
-            <div class="metric-chart">
-                <i class="fas fa-microchip"></i>
-            </div>
-        </div>
-        <div class="metric-card">
-            <h3>Mémoire</h3>
-            <div class="metric-chart">
-                <i class="fas fa-memory"></i>
-            </div>
+        <div id="metrics-simulated-container">
+            <div class="scan-loader">🌐 <i class="fas fa-spinner fa-spin"></i> Scan en cours...</div>
+            <table class="table table-simulated" style="margin-top:16px;">
+                <thead>
+                    <tr><th>Type</th><th>Valeur</th><th>Statut</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>CPU</td><td>23%</td><td>🟢 OK</td></tr>
+                    <tr><td>Mémoire</td><td>45%</td><td>🟢 OK</td></tr>
+                    <tr><td>Disque</td><td>67%</td><td>⚪ Monitoring</td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
 </div>

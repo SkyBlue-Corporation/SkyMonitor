@@ -7,8 +7,20 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/static/css/style.css">
     <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+    <script>
+        // Crée une connexion Socket.IO globale réutilisable par les scripts frontend
+        if (typeof io !== 'undefined') {
+            try {
+                window.socket = io();
+            } catch (e) {
+                console.warn('Socket.IO init failed:', e);
+            }
+        }
+    </script>
 </head>
 <body>
+    <!-- Animation monitoring lors des transitions de page -->
+    <div id="monitoring-loader" style="display:none;"></div>
     <!-- Navigation -->
     <nav class="navbar">
         <div class="nav-brand">
@@ -48,6 +60,22 @@
         <div class="nav-user">
             <i class="fas fa-user-circle"></i>
             <span>Administrateur</span>
+            <button id="theme-toggle" class="btn btn-outline" title="Changer de thème">
+                <i class="fas fa-adjust"></i> Thème
+            </button>
+        </div>
+        <!-- Statut de connexion & mini-métriques en direct -->
+        <div class="nav-status">
+            <div id="connection-indicator" class="connection disconnected" title="Socket.IO: déconnecté">
+                <i class="fas fa-circle"></i>
+            </div>
+            <div class="nav-stats">
+                <div class="nav-stat"><i class="fas fa-microchip"></i> <span id="nav-cpu-value">--%</span></div>
+                <div class="nav-stat"><i class="fas fa-memory"></i> <span id="nav-memory-value">--%</span></div>
+                <div class="nav-stat"><i class="fas fa-hdd"></i> <span id="nav-disk-value">--%</span></div>
+            </div>
+            <span id="sim-badge" class="sim-badge" style="display:none;" title="Les valeurs affichées sont simulées">Simulées</span>
+            </div>
         </div>
     </nav>
 
@@ -55,6 +83,26 @@
     <main id="main-content">
         <!-- Le contenu sera chargé dynamiquement par le router -->
     </main>
+
+    <!-- Pied de page commun -->
+    <footer class="site-footer">
+        <div class="footer-content">
+            <span id="copyright">© 2025 SkyBlue Corporation</span>
+            <span class="footer-sep">|</span>
+            <a href="/mentions-legales" class="footer-link" title="Mentions légales"><i class="fas fa-balance-scale"></i> Mentions légales</a>
+            <span class="footer-sep">|</span>
+            <a href="/contact" class="footer-link" title="Contact"><i class="fas fa-envelope"></i> Contact</a>
+            <span class="footer-sep">|</span>
+            <a href="/support" class="footer-link" title="Support"><i class="fas fa-life-ring"></i> Support</a>
+            <span class="footer-sep">|</span>
+            <a href="/confidentialite" class="footer-link" title="Politique de confidentialité"><i class="fas fa-user-shield"></i> Confidentialité</a>
+        </div>
+        <div class="footer-legal">
+            <small>
+                Ce site respecte la réglementation RGPD. Les données collectées sont utilisées uniquement pour le monitoring et ne sont jamais revendues. Pour toute demande concernant vos données personnelles, contactez-nous à <a href="mailto:legal@skyblue-corp.com">codecld@proton.me</a>.
+            </small>
+        </div>
+    </footer>
 
     <!-- Scripts -->
     <script src="/static/js/router.js"></script>

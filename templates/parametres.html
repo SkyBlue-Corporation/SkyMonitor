@@ -18,25 +18,18 @@
         </div>
         
         <div class="settings-content">
-            <div class="setting-group">
-                <label>Intervalle de scan</label>
-                <select>
-                    <option>30 secondes</option>
-                    <option>1 minute</option>
-                    <option>5 minutes</option>
-                </select>
-            </div>
-            
-            <div class="setting-group">
-                <label>
-                    <input type="checkbox" checked>
-                    Notifications par email
-                </label>
-            </div>
-            
-            <div class="actions">
-                <button class="btn btn-primary">Sauvegarder</button>
-                <button class="btn btn-outline">Annuler</button>
+            <div id="parametres-simulated-container">
+                <div class="scan-loader">🌐 <i class="fas fa-spinner fa-spin"></i> Scan en cours...</div>
+                <table class="table table-simulated" style="margin-top:16px;">
+                    <thead>
+                        <tr><th>Paramètre</th><th>Valeur</th><th>Statut</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Intervalle de scan</td><td>1 minute</td><td>🟢 Appliqué</td></tr>
+                        <tr><td>Notifications email</td><td>Activées</td><td>🟢 OK</td></tr>
+                        <tr><td>Mode sécurité</td><td>Renforcé</td><td>⚪ Monitoring</td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

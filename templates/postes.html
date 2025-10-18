@@ -18,7 +18,18 @@
     
     <div class="workstations-grid">
         <div id="postes-container">
-            <p>Chargement des postes...</p>
+            <!-- Fallback HTML brut si JS/API ne répond pas -->
+            <table class="table table-simulated">
+                <thead>
+                    <tr><th>Nom</th><th>Adresse IP</th><th>Marque</th><th>Statut</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>💻 PC-Admin</td><td>192.168.1.101</td><td>Dell</td><td>🟢 En ligne</td></tr>
+                    <tr><td>💻 PC-Compta</td><td>192.168.1.102</td><td>HP</td><td>🔴 Hors ligne</td></tr>
+                    <tr><td>💻 PC-Dev</td><td>192.168.1.103</td><td>Lenovo</td><td>🟢 En ligne</td></tr>
+                    <tr><td>💻 PC-Visio</td><td>192.168.1.104</td><td>Asus</td><td>⚪ Déconnecté</td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
 </div>

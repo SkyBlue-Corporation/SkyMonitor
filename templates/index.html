@@ -59,7 +59,12 @@
             </div>
             <div class="card-content">
                 <div id="devices-container">
-                    <p>Chargement des appareils...</p>
+                    <!-- Fallback HTML brut si JS/API ne répond pas -->
+                    <ul>
+                        <li>192.168.1.201 — Printer-HP (HP)</li>
+                        <li>192.168.1.202 — Cam-IP (Axis)</li>
+                        <li>192.168.1.203 — NAS-Synology (Synology)</li>
+                    </ul>
                 </div>
             </div>
         </div>
@@ -82,6 +87,18 @@
             </div>
         </div>
     </div>
+    
+    <!-- Pitch animé style shell -->
+    <div class="pitch-shell card">
+        <div class="pitch-header">
+            <h3>Présentation — CyberDefence</h3>
+        </div>
+        <div class="pitch-body">
+            <pre id="shellPitch" class="shell-output" aria-live="polite"></pre>
+            <div id="shellCursor" class="shell-cursor">▌</div>
+        </div>
+    </div>
+
 </div>
 
 <script>
@@ -102,5 +119,17 @@ function scanNetwork() {
         }
     });
 }
+</script>
+
+<style>
+/* Pitch shell styles */
+.pitch-shell { margin-top: 20px; padding: 16px; background: var(--card-bg); border-radius: 8px; box-shadow: var(--card-shadow); }
+.pitch-body { position: relative; font-family: 'Source Code Pro', monospace; background: rgba(0,0,0,0.06); padding: 12px; border-radius: 6px; min-height: 120px; }
+.shell-output { white-space: pre-wrap; color: var(--text); margin: 0; }
+.shell-cursor { position: absolute; right: 12px; bottom: 12px; font-family: monospace; animation: blink 1s steps(2,start) infinite; }
+@keyframes blink { 0% { opacity: 1 } 50% { opacity: 0 } 100% { opacity: 1 } }
+</style>
+
+<script src="/static/js/pitch.js"></script>
 </script>
 {% endblock %}

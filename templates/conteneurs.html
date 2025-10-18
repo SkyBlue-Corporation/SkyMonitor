@@ -24,7 +24,18 @@
     
     <div class="containers-list">
         <div id="conteneurs-container">
-            <p>Chargement des conteneurs...</p>
+            <!-- Fallback HTML brut si JS/API ne répond pas -->
+            <table class="table table-simulated">
+                <thead>
+                    <tr><th>Nom</th><th>Image</th><th>Statut</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>📦 nginx-web</td><td>nginx:latest</td><td>🟢 En cours</td></tr>
+                    <tr><td>📦 db-mysql</td><td>mysql:8.0</td><td>🔴 Arrêté</td></tr>
+                    <tr><td>📦 redis-cache</td><td>redis:7.0</td><td>🟢 En cours</td></tr>
+                    <tr><td>📦 backup-agent</td><td>backup:latest</td><td>⚪ Déconnecté</td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
 </div>

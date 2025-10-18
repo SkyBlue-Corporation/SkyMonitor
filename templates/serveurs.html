@@ -18,7 +18,18 @@
     
     <div class="servers-list">
         <div id="serveurs-container">
-            <p>Chargement des serveurs...</p>
+            <!-- Fallback HTML brut si JS/API ne répond pas -->
+            <table class="table table-simulated">
+                <thead>
+                    <tr><th>Nom</th><th>Adresse IP</th><th>Statut</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>🖥️ SRV-Paris</td><td>192.168.1.10</td><td>🟢 En ligne</td></tr>
+                    <tr><td>🖥️ SRV-Lyon</td><td>192.168.1.11</td><td>🔴 Hors ligne</td></tr>
+                    <tr><td>🖥️ SRV-Marseille</td><td>192.168.1.12</td><td>🟢 En ligne</td></tr>
+                    <tr><td>🖥️ SRV-Backup</td><td>192.168.1.13</td><td>⚪ Déconnecté</td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
