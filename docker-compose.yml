@@ -1,20 +1,32 @@
 version: '3.8'
 
 services:
-  # Application Flask
+  # Application Flask (web)
   web:
     build: .
-    ports:
-      - "5000:5000"
+    # NOTE: host networking required to see the host LAN (Linux only)
+    network_mode: "host"
     environment:
       - FLASK_ENV=production
-      - INFLUXDB_URL=http://influxdb:8086
+      - INFLUXDB_URL=http://localhost:8086
       - INFLUXDB_TOKEN=monitoring-token
       - INFLUXDB_ORG=monitoring-org
       - INFLUXDB_BUCKET=monitoring-data
-    depends_on:
-      - influxdb
+      # Par défaut, on désactive les jobs lourds (changez si besoin)
+      - DISABLE_HEAVY_TESTS=true
+    # Monte les logs pour pouvoir lire depuis l'hôte
+    volumes:
+      - ./logs:/app/logs
+    # Capabilités réseau nécessaires pour certains scans nmap (SYN/raw)
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:5000/api/system/stats || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
   # InfluxDB
   influxdb:
