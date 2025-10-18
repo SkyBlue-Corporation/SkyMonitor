@@ -16,12 +16,11 @@ install: venv
 
 test: install
 	@echo "Running tests..."
-	@$(PYTHON) -m pytest -q
-
+	@$(PYTHON) -m pytest -q --disable-warnings
 clean:
 	@echo "Cleaning..."
 	@rm -rf $(VENV) .pytest_cache __pycache__ tests/__pycache__
-
+	@find . -type d -name '*__pycache__' -delete
 
 
 
