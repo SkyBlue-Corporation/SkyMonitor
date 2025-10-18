@@ -14,8 +14,6 @@ services:
       - INFLUXDB_BUCKET=monitoring-data
     depends_on:
       - influxdb
-    volumes:
-      - .:/app
     restart: unless-stopped
 
   # InfluxDB
