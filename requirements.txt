@@ -7,3 +7,4 @@ eventlet==0.33.3
 gunicorn==22.0.0
 pytest>=7.0
 pytest-cov
+docker==6.1.2
