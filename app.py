@@ -8,11 +8,14 @@ import psutil
 import nmap
 import docker
 
+
 # ------------------- Flask + SocketIO -------------------
 app = Flask(__name__, static_folder='static')
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'change-this-key')
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
-
+if os.environ.get('ENV') == 'production':
+    socketio = SocketIO(app, cors_allowed_origins="*")  # utilisera Eventlet/Gevent si installés
+else:
+    socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')  # dev/tests
 # ------------------- InfluxDB Client -------------------
 try:
     import influxdb_client
