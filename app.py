@@ -9,9 +9,8 @@ from flask_socketio import SocketIO
 import psutil
 import logging
 
-# ----------------------------------------
 # Initialisation Flask + logs
-# ----------------------------------------
+
 app = Flask(__name__)
 
 # Dossier de logs
