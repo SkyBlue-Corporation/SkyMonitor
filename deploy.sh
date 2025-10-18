@@ -13,18 +13,21 @@ if ! command -v docker-compose &> /dev/null; then
 fi
 
 echo "📦 Construction des images..."
-docker-compose build
+docker-compose build web
 
 echo "🛑 Arrêt des services existants..."
-docker-compose down
+docker-compose down --volumes --remove-orphans
 
 echo "🎯 Démarrage des services..."
 docker-compose up -d
 
-echo "⏳ Attente du démarrage..."
-sleep 20
+echo "⏳ Attente du démarrage du service web..."
+until curl -fsS http://localhost:5000/api/system/stats &> /dev/null; do
+    echo "⏳ Web service pas encore prêt..."
+    sleep 5
+done
 
-echo "🔍 Vérification du statut..."
+echo "🔍 Vérification du statut des containers..."
 docker-compose ps
 
 echo ""
