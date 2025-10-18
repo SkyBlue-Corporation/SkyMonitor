@@ -15,7 +15,7 @@ install: venv
 	@$(PIP) install -r requirements.txt
 
 test: install
-	@echo "Running tests..."
+	@echo "Running tests !!!!"
 	@$(PYTHON) -m pytest -q --disable-warnings
 clean:
 	@echo "Cleaning..."
