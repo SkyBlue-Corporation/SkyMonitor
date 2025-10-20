@@ -21,7 +21,7 @@ logging.basicConfig(
 
 # --- SocketIO ---
 if os.environ.get('ENV') == 'production':
-    socketio = SocketIO(app, cors_allowed_origins="*")
+    socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 else:
     socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
