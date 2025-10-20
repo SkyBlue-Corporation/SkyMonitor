@@ -24,5 +24,5 @@ COPY . .
 RUN mkdir -p /app/logs
 
 EXPOSE 5000
-
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "app:app"]
+# worker compatible WebSockets
+CMD ["gunicorn", "--worker-class", "eventlet", "--bind", "0.0.0.0:5000", "app:app"]
