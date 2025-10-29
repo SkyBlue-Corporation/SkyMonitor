@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Application Flask
   web:
@@ -30,8 +28,6 @@ services:
       - DOCKER_INFLUXDB_INIT_ORG=monitoring-org
       - DOCKER_INFLUXDB_INIT_BUCKET=monitoring-data
       - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=monitoring-token
-    volumes:
-      - influxdb_data:/var/lib/influxdb2
     restart: unless-stopped
 
   # Grafana
