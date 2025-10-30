@@ -1,11 +1,10 @@
-import os
-from datetime import datetime
 from typing import List, Optional
-
 from flask import Flask, render_template, jsonify, request, send_from_directory
 from flask_socketio import SocketIO
 import psutil
 import logging
+import os
+from services.aletre_telegram import send_telegram_alert
 
 # --- Initialisation Flask + logs ---
 app = Flask(__name__, static_folder='static')
@@ -33,23 +32,64 @@ except Exception:
     influxdb_client = None
     SYNCHRONOUS = None
 
+from dotenv import load_dotenv
+import os
+from datetime import datetime
+from influxdb_client import Point
+
+load_dotenv()
+
 INFLUXDB_URL = os.environ.get('INFLUXDB_URL', 'http://localhost:8086')
 INFLUXDB_TOKEN = os.environ.get('INFLUXDB_TOKEN', '')
 INFLUXDB_ORG = os.environ.get('INFLUXDB_ORG', '')
 INFLUXDB_BUCKET = os.environ.get('INFLUXDB_BUCKET', '')
 
-if influxdb_client and INFLUXDB_TOKEN and INFLUXDB_BUCKET and INFLUXDB_ORG:
+# Vérification des variables
+if not all([INFLUXDB_TOKEN, INFLUXDB_BUCKET, INFLUXDB_ORG]):
+    raise ValueError("⚠️ Vérifie que TOKEN, BUCKET et ORG sont bien définis !")
+
+# Initialisation du client
+if influxdb_client:
     try:
         influx_client = influxdb_client.InfluxDBClient(
-            url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG
+            url=INFLUXDB_URL,
+            token=INFLUXDB_TOKEN,
+            org=INFLUXDB_ORG
         )
         write_api = influx_client.write_api(write_options=SYNCHRONOUS)
-    except Exception:
+        print("✅ Connexion à InfluxDB réussie !")
+    except Exception as e:
         influx_client = None
         write_api = None
+        print(f"❌ Erreur lors de l'initialisation du client : {e}")
 else:
     influx_client = None
     write_api = None
+    print("❌ influxdb_client non installé.")
+
+# Test d'écriture
+if write_api:
+    point = Point("test_metric").tag("source", "sky_monitor").field("value", 42).time(datetime.utcnow())
+    try:
+        write_api.write(bucket=INFLUXDB_BUCKET, record=point)
+        print(f"✅ Point écrit dans le bucket '{INFLUXDB_BUCKET}' !")
+        send_telegram_alert("✅ Nouveau point écrit dans InfluxDB: test_metric = 42")
+    except Exception as e:
+        print(f"❌ Erreur lors de l’écriture du point : {e}")
+
+# Test de lecture
+if influx_client:
+    try:
+        query_api = influx_client.query_api()
+        query = f'from(bucket:"{INFLUXDB_BUCKET}") |> range(start: -1h) |> filter(fn: (r) => r._measurement == "test_metric")'
+        result = query_api.query(org=INFLUXDB_ORG, query=query)
+        print(f"📊 Points récupérés dans le bucket '{INFLUXDB_BUCKET}':")
+        for table in result:
+            for record in table.records:
+                print(f"  {record.get_time()} | {record.get_measurement()} | {record.get_field()} = {record.get_value()}")
+    except Exception as e:
+        print(f"❌ Erreur lors de la lecture : {e}")
+
 
 # --- Docker ---
 try:
@@ -109,7 +149,16 @@ def system_stats():
         return jsonify({
             "error": "Unable to collect system stats",
             "details": str(e)
-        }), 500
+        }), 500    
+
+threshold = int(os.environ.get("ALERT_THRESHOLD", 80))
+if cpu > threshold:
+        send_telegram_alert(f"⚠️ CPU élevé: {cpu}%")
+        if mem > threshold:
+            send_telegram_alert(f"⚠️ Mémoire élevée: {mem}%")
+            if disk > threshold:
+                send_telegram_alert(f"⚠️ Disque presque plein: {disk}%")
+
 
 @app.route("/api/scan/network", methods=["POST"])
 def api_scan_network():
