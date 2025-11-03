@@ -1,13 +1,17 @@
-from typing import List, Optional
-from flask import Flask, render_template, jsonify, request, send_from_directory
+from flask import Flask, render_template, jsonify, request, send_from_directory, redirect, url_for
 from flask_socketio import SocketIO
+from flask_login import LoginManager, login_user, logout_user, login_required, UserMixin, current_user
 import psutil
 import logging
 import os
-from services.aletre_telegram import send_telegram_alert
+from dotenv import load_dotenv
+from datetime import datetime
+
+# --- Chargement des variables ---
+load_dotenv()
 
 # --- Initialisation Flask + logs ---
-app = Flask(__name__, static_folder='static')
+app = Flask(__name__, static_folder='static', template_folder='templates')
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'change-this-key')
 os.makedirs("logs", exist_ok=True)
 
@@ -19,36 +23,60 @@ logging.basicConfig(
 )
 
 # --- SocketIO ---
-if os.environ.get('ENV') == 'production':
-    socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
-else:
-    socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+
+# --- Authentification ---
+login_manager = LoginManager()
+login_manager.login_view = "login"
+login_manager.init_app(app)
+
+class User(UserMixin):
+    def __init__(self, id, username, password):
+        self.id = id
+        self.username = username
+        self.password = password
+
+users = {
+    "admin": User(id=1, username="admin", password="admin123")
+}
+
+@login_manager.user_loader
+def load_user(user_id):
+    for user in users.values():
+        if str(user.id) == str(user_id):
+            return user
+    return None
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+        user = users.get(username)
+        if user and password == user.password:
+            login_user(user)
+            # 🔁 Redirection directe vers la page principale
+            return redirect(url_for("index"))
+        return render_template("login.html", error="Identifiants invalides")
+    return render_template("login.html")
 
 # --- InfluxDB ---
 try:
     import influxdb_client
     from influxdb_client.client.write_api import SYNCHRONOUS
+    from influxdb_client import Point
 except Exception:
     influxdb_client = None
     SYNCHRONOUS = None
-
-from dotenv import load_dotenv
-import os
-from datetime import datetime
-from influxdb_client import Point
-
-load_dotenv()
 
 INFLUXDB_URL = os.environ.get('INFLUXDB_URL', 'http://localhost:8086')
 INFLUXDB_TOKEN = os.environ.get('INFLUXDB_TOKEN', '')
 INFLUXDB_ORG = os.environ.get('INFLUXDB_ORG', '')
 INFLUXDB_BUCKET = os.environ.get('INFLUXDB_BUCKET', '')
 
-# Vérification des variables
 if not all([INFLUXDB_TOKEN, INFLUXDB_BUCKET, INFLUXDB_ORG]):
     raise ValueError("⚠️ Vérifie que TOKEN, BUCKET et ORG sont bien définis !")
 
-# Initialisation du client
 if influxdb_client:
     try:
         influx_client = influxdb_client.InfluxDBClient(
@@ -57,15 +85,17 @@ if influxdb_client:
             org=INFLUXDB_ORG
         )
         write_api = influx_client.write_api(write_options=SYNCHRONOUS)
+        query_api = influx_client.query_api()
         print("✅ Connexion à InfluxDB réussie !")
     except Exception as e:
         influx_client = None
         write_api = None
-        print(f"❌ Erreur lors de l'initialisation du client : {e}")
+        query_api = None
+        print(f"❌ Erreur InfluxDB : {e}")
 else:
     influx_client = None
     write_api = None
-    print("❌ influxdb_client non installé.")
+    query_api = None
 
 # Test d'écriture
 if write_api:
@@ -73,14 +103,12 @@ if write_api:
     try:
         write_api.write(bucket=INFLUXDB_BUCKET, record=point)
         print(f"✅ Point écrit dans le bucket '{INFLUXDB_BUCKET}' !")
-        send_telegram_alert("✅ Nouveau point écrit dans InfluxDB: test_metric = 42")
     except Exception as e:
         print(f"❌ Erreur lors de l’écriture du point : {e}")
 
 # Test de lecture
 if influx_client:
     try:
-        query_api = influx_client.query_api()
         query = f'from(bucket:"{INFLUXDB_BUCKET}") |> range(start: -1h) |> filter(fn: (r) => r._measurement == "test_metric")'
         result = query_api.query(org=INFLUXDB_ORG, query=query)
         print(f"📊 Points récupérés dans le bucket '{INFLUXDB_BUCKET}':")
@@ -89,7 +117,6 @@ if influx_client:
                 print(f"  {record.get_time()} | {record.get_measurement()} | {record.get_field()} = {record.get_value()}")
     except Exception as e:
         print(f"❌ Erreur lors de la lecture : {e}")
-
 
 # --- Docker ---
 try:
@@ -119,12 +146,12 @@ from services.network_scan import (
     init_network_scan
 )
 
-# --- Initialisation des modules ---
 init_metrics(influx_client, write_api, INFLUXDB_BUCKET, socketio)
 init_network_scan(write_metrics, socketio)
 
 # --- Routes API ---
 @app.route("/api/system/stats")
+@login_required
 def system_stats():
     try:
         cpu = psutil.cpu_percent(interval=None)
@@ -144,23 +171,11 @@ def system_stats():
         return jsonify(data), 200
 
     except Exception as e:
-        error_msg = f"Error collecting system stats: {e}"
-        logging.error(error_msg)
-        return jsonify({
-            "error": "Unable to collect system stats",
-            "details": str(e)
-        }), 500    
-
-threshold = int(os.environ.get("ALERT_THRESHOLD", 80))
-if cpu > threshold:
-        send_telegram_alert(f"⚠️ CPU élevé: {cpu}%")
-        if mem > threshold:
-            send_telegram_alert(f"⚠️ Mémoire élevée: {mem}%")
-            if disk > threshold:
-                send_telegram_alert(f"⚠️ Disque presque plein: {disk}%")
-
+        logging.error(f"System stats error: {e}")
+        return jsonify({"error": "Unable to collect system stats"}), 500
 
 @app.route("/api/scan/network", methods=["POST"])
+@login_required
 def api_scan_network():
     try:
         payload = request.json or {}
@@ -178,14 +193,15 @@ def api_scan_network():
         return jsonify({"success": True, "message": "Scan launched"}), 202
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
-    
+
 @app.route("/test/socket")
+@login_required
 def test_socket():
     return render_template("test_socket.html")
 
-
 # --- SPA & Static ---
 @app.route("/")
+@login_required
 def index():
     return render_template("index.html")
 
