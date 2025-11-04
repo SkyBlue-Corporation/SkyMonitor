@@ -6,16 +6,32 @@
     <title>SkyMonitor - Système de Monitoring</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
     <script>
-        // Crée une connexion Socket.IO globale réutilisable par les scripts frontend
-        if (typeof io !== 'undefined') {
-            try {
-                window.socket = io();
-            } catch (e) {
-                console.warn('Socket.IO init failed:', e);
-            }
+    // Crée une connexion Socket.IO globale en forçant WebSocket
+    if (typeof io !== 'undefined') {
+        try {
+            window.socket = io({
+                transports: ["websocket"], // force WebSocket
+                upgrade: false             // empêche le fallback vers polling
+            });
+
+            window.socket.on("connect", () => {
+                console.log("✅ Socket.IO connecté via WebSocket");
+            });
+
+            window.socket.on("disconnect", (reason) => {
+                console.warn("❌ Socket.IO déconnecté :", reason);
+            });
+
+            window.socket.on("connect_error", (err) => {
+                console.error("⚠️ Erreur de connexion Socket.IO :", err.message);
+            });
+        } catch (e) {
+            console.warn("Socket.IO init failed:", e);
         }
+    }
     </script>
 </head>
 <body>
@@ -55,7 +71,7 @@
             <a href="/parametres" class="nav-link" data-route="/parametres">
                 <i class="fas fa-cog"></i>
                 <span>Paramètres</span>
-            </a>
+                <a href="/login" class="nav-link" data-route="/login"></a>
         </div>
         <div class="nav-user">
             <i class="fas fa-user-circle"></i>
@@ -81,6 +97,31 @@
 
     <!-- Contenu principal -->
     <main id="main-content">
+         <section id="metrics-visual">
+            <section id="network-scan">
+    <h2>Scan Réseau</h2>
+<button id="launchScan" class="btn btn-primary">
+    <i class="fas fa-search"></i> Lancer le scan réseau
+  </button>
+  <button id="simulateProgress" class="btn btn-outline" style="margin-top:1em;">
+    <i class="fas fa-tasks"></i> Simuler la barre de progression
+</button>
+  <!-- Barre de progression en dehors du bouton -->
+<div id="scan-progress-bar" class="progress-bar" style="margin-top:1em; display:none;">
+  <div id="scan-progress-fill" class="progress-fill"></div>
+</div>
+  <!-- zone de Statut -->
+  <div id="scan-status" style="margin-top:1em;"></div>
+  <table id="scanTable" style="margin-top:1em; display:none;">
+    <thead>
+      <tr><th>IP</th><th>Ports ouverts</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
+        <h2>Évolution du CPU</h2>
+        <canvas id="metricsChart" width="600" height="300"></canvas>
+    </section>
         <!-- Le contenu sera chargé dynamiquement par le router -->
     </main>
 
@@ -107,5 +148,7 @@
     <!-- Scripts -->
     <script src="/static/js/router.js"></script>
     <script src="/static/js/app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 </body>
 </html>

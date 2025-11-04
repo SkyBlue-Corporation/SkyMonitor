@@ -18,9 +18,11 @@ test: install
 	@echo "Running tests !!!!"
 	@$(PYTHON) -m pytest -q --disable-warnings
 clean:
-	@echo "Cleaning..."
+	@echo "Warnings Cleaning..."
 	@rm -rf $(VENV) .pytest_cache __pycache__ tests/__pycache__
-	@find . -type d -name '*__pycache__' -delete
+	@find . -type f -name '*.pyc' -delete
+	@find . -type d -name '__pycache__' -exec rm -rf {} +
+	@echo "Cleaned !!!!"
 
 
 

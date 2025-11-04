@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🚀 Déploiement de l'application de monitoring..."
+echo "🚀 Warning Déploiement de l'application de monitoring !!!"
 
 if ! command -v docker &> /dev/null; then
     echo "❌ Docker n'est pas installé"
@@ -22,7 +22,7 @@ echo "🎯 Démarrage des services..."
 docker-compose up -d
 
 echo "⏳ Attente du démarrage du service web..."
-until curl -fsS http://localhost:5000/api/system/stats &> /dev/null; do
+until curl -fsS http://localhost:5000 &> /dev/null; do
     echo "⏳ Web service pas encore prêt..."
     sleep 5
 done
@@ -31,7 +31,7 @@ echo "🔍 Vérification du statut des containers..."
 docker-compose ps
 
 echo ""
-echo "✅ Déploiement terminé!"
+echo "✅ Déploiement terminé !!!"
 echo ""
 echo "🌐 URLs d'accès:"
 echo "   - Application: http://localhost:5000"

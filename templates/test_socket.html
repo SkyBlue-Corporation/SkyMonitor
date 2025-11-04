@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>SkyMonitor - Test Socket.IO</title>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 2em; background: #f4f4f4; }
+    h2 { margin-bottom: 0.5em; }
+    #status { font-weight: bold; margin-bottom: 1em; }
+    #charts { display: flex; gap: 2em; flex-wrap: wrap; }
+    canvas { background: #fff; border: 1px solid #ccc; padding: 1em; }
+    table { width: 100%; border-collapse: collapse; margin-top: 2em; background: #fff; }
+    th, td { border: 1px solid #ccc; padding: 0.5em; text-align: left; }
+    th { background: #eee; }
+  </style>
+</head>
+<body>
+  <h2>🧪 Test Socket.IO</h2>
+  <div id="status">Connexion en cours...</div>
+
+  <div id="charts">
+    <canvas id="cpuChart" width="300" height="200"></canvas>
+    <canvas id="memoryChart" width="300" height="200"></canvas>
+    <canvas id="diskChart" width="300" height="200"></canvas>
+  </div>
+
+  <h3>🔍 Résultats du scan réseau</h3>
+  <table id="scanTable">
+    <thead>
+      <tr><th>IP</th><th>Ports ouverts</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const status = document.getElementById("status");
+    const scanTableBody = document.querySelector("#scanTable tbody");
+
+    const socket = io("http://" + window.location.hostname + ":5000");
+
+    socket.on("connect", () => {
+      status.textContent = "✅ Connecté à Socket.IO";
+    });
+
+    socket.on("disconnect", () => {
+      status.textContent = "❌ Connexion perdue";
+    });
+
+    socket.onAny((event, ...args) => {
+  console.log("[Socket.IO]", event, args);
+});
+
+    // --- Charts ---
+    const cpuChart = new Chart(document.getElementById("cpuChart"), {
+      type: "line",
+      data: { labels: [], datasets: [{ label: "CPU (%)", data: [], borderColor: "red" }] },
+      options: { scales: { y: { min: 0, max: 100 } } }
+    });
+
+    const memoryChart = new Chart(document.getElementById("memoryChart"), {
+      type: "line",
+      data: { labels: [], datasets: [{ label: "RAM (%)", data: [], borderColor: "blue" }] },
+      options: { scales: { y: { min: 0, max: 100 } } }
+    });
+
+    const diskChart = new Chart(document.getElementById("diskChart"), {
+      type: "line",
+      data: { labels: [], datasets: [{ label: "Disque (%)", data: [], borderColor: "green" }] },
+      options: { scales: { y: { min: 0, max: 100 } } }
+    });
+
+    socket.on("system_metrics", (data) => {
+      const ts = new Date(data.timestamp).toLocaleTimeString();
+      cpuChart.data.labels.push(ts);
+      cpuChart.data.datasets[0].data.push(data.cpu_percent);
+      memoryChart.data.labels.push(ts);
+      memoryChart.data.datasets[0].data.push(data.memory_percent);
+      diskChart.data.labels.push(ts);
+      diskChart.data.datasets[0].data.push(data.disk_percent);
+
+      cpuChart.update();
+      memoryChart.update();
+      diskChart.update();
+    });
+
+    socket.on("network_scan_complete", (data) => {
+      if (!data.success) return;
+      scanTableBody.innerHTML = "";
+      for (const host of data.summary.results) {
+        const ip = host.ip;
+        const openPorts = host.ports.filter(p => p.state === "open").map(p => p.port).join(", ");
+        const row = `<tr><td>${ip}</td><td>${openPorts}</td></tr>`;
+        scanTableBody.insertAdjacentHTML("beforeend", row);
+      }
+    });
+  </script>
+</body>
+</html>

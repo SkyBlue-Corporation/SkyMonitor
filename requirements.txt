@@ -3,8 +3,11 @@ Flask-SocketIO==5.3.6
 influxdb-client==1.36.1
 psutil==5.9.5
 python-nmap==0.7.1
-eventlet==0.33.3
+eventlet== 0.35.2
 gunicorn==22.0.0
 pytest>=7.0
 pytest-cov
 docker==6.1.2
+python-dotenv==1.0.0
+flask-login==0.6.2
+werkzeug<3.0
