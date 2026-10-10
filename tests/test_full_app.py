@@ -1,4 +1,5 @@
 # test/test_full_app.py
+import os
 import pytest
 from unittest.mock import patch, MagicMock
 import app as myapp
@@ -8,7 +9,12 @@ import psutil
 @pytest.fixture
 def client():
     myapp.app.config["TESTING"] = True
+    myapp.app.config["WTF_CSRF_ENABLED"] = False
     with myapp.app.test_client() as client:
+        client.post("/login", data={
+            "username": os.environ["ADMIN_USERNAME"],
+            "password": os.environ["ADMIN_PASSWORD"],
+        })
         yield client
 
 # ------------------- Test API système -------------------

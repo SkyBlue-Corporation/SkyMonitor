@@ -10,4 +10,6 @@ pytest-cov
 docker==6.1.2
 python-dotenv==1.0.0
 flask-login==0.6.2
+flask-wtf==1.2.1
+flask-limiter==3.5.0
 werkzeug<3.0

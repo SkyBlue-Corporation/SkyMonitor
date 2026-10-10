@@ -12,6 +12,11 @@ if ! command -v docker-compose &> /dev/null; then
     exit 1
 fi
 
+if [ ! -f .env ]; then
+    echo "❌ Fichier .env manquant. Copiez .env.example vers .env et renseignez vos secrets avant de déployer."
+    exit 1
+fi
+
 echo "📦 Construction des images..."
 docker-compose build web
 
@@ -38,6 +43,4 @@ echo "   - Application: http://localhost:5000"
 echo "   - Grafana:    http://localhost:3000"
 echo "   - InfluxDB:   http://localhost:8086"
 echo ""
-echo "🔑 Identifiants:"
-echo "   Grafana: admin / admin123"
-echo "   InfluxDB: admin / admin123"
+echo "🔑 Identifiants: voir les valeurs définies dans votre fichier .env"
